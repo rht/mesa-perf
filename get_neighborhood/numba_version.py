@@ -1,6 +1,7 @@
 import numpy as np
 import numba as nb
 from numba import types
+from numba.typed import List
 
 locals = {
     "x": types.int64,
@@ -33,3 +34,29 @@ def get_neighborhood(height, width, pos, moore, radius):
             count += 1
 
     return neighborhood[:count]
+
+@nb.njit(cache=True, locals=locals)
+def get_neighborhood_typed_list(height, width, pos, moore, radius):
+    x, y = pos
+    xfrom = max(0, x - radius)
+    xto = min(width, x + radius + 1)
+    yfrom = max(0, y - radius)
+    yto = min(height, y + radius + 1)
+
+    neighborhood = List()
+
+    count = 0
+    for nx in range(xfrom, xto):
+        for ny in range(yfrom, yto):
+            if not moore and abs(nx - x) + abs(ny - y) > radius:
+                continue
+            neighborhood.append((nx, ny))
+            count += 1
+
+    return neighborhood
+
+
+if __name__ == "__main__":
+    from numba.core.annotations.pretty_annotate import Annotate
+    #print(Annotate(get_neighborhood))
+    get_neighborhood(30, 30, (10, 10), True, 10)
