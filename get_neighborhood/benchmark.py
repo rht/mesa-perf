@@ -43,7 +43,7 @@ tic = time.time()
 for i in range(repetition):
     a = tortar.compute_neighborhood((10, 10), True, True, 10, False, 30, 30)
     [j for j in a]
-print_elapsed("tortar")
+print_elapsed("cython list")
 
 from numba_version import get_neighborhood, get_neighborhood_typed_list
 
