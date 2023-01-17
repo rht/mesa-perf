@@ -23,7 +23,7 @@ cdef class Grid:
     cdef int num_cells
     cdef long[:, :] grid
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, torus: bint) -> None:
         """Create a new grid.
 
         Args:
@@ -32,7 +32,7 @@ cdef class Grid:
         """
         self.height = height
         self.width = width
-        #self.torus = torus
+        self.torus = torus
         self.num_cells = height * width
 
         # self.grid = np.empty((self.width, self.height), self.default_val())
@@ -47,12 +47,13 @@ cdef class Grid:
         # Neighborhood Cache
         #self._neighborhood_cache: dict[Any, list[Coordinate]] = dict()
 
-    def default_val(self):
+    cpdef char default_val(self):
         """Default value for new cell elements."""
         return -1
-
+ 
+    @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef long[:, :] get_neighborhood(
+    cpdef int[:, :] get_neighborhood(
         self,
         object pos,
         bint moore,
@@ -88,8 +89,8 @@ cdef class Grid:
 
         cdef int max_neighborhood_count
         max_neighborhood_count = (xto - xfrom) * (yto - yfrom)
-        cdef long[:, :] neighborhood
-        neighborhood = np.empty((max_neighborhood_count, 2), long)
+        cdef int[:, :] neighborhood
+        neighborhood = np.empty((max_neighborhood_count, 2), int)
 
         cdef int count
         cdef int nx, ny
