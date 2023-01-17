@@ -33,7 +33,12 @@ def get_neighborhood(height, width, pos, moore, radius):
             neighborhood[count, 1] = ny
             count += 1
 
-    return neighborhood[:count]
+    neighborhood_list = [(0, 0)] * count
+    for i in range(count):
+        neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+
+    return neighborhood_list
+    #return neighborhood[:count]
 
 @nb.njit(cache=True, locals=locals)
 def get_neighborhood_typed_list(height, width, pos, moore, radius):

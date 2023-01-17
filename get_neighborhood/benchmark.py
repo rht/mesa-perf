@@ -51,7 +51,7 @@ get_neighborhood(30, 30, (10, 10), True, 10)
 # print(get_neighborhood.inspect_types())
 tic = time.time()
 for i in range(repetition):
-    a = get_neighborhood(30, 30, (10, 10), True, 10).tolist()
+    a = get_neighborhood(30, 30, (10, 10), True, 10)
     [j for j in a]
 print_elapsed("numba np.ndarray")
 

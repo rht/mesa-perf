@@ -52,7 +52,7 @@ cdef class Grid:
         return -1
 
     @cython.boundscheck(False)
-    cpdef long[:, :] get_neighborhood(
+    cpdef list get_neighborhood(
         self,
         object pos,
         bint moore,
@@ -107,7 +107,16 @@ cdef class Grid:
 
         #self._neighborhood_cache[cache_key] = neighborhood
 
-        return neighborhood[:count]
+        # IF you want to return a NumPy array instead
+        #return neighborhood[:count]
+
+        # Convert to list
+        cdef list neighborhood_list
+        neighborhood_list = [0] * count
+        for i in range(count):
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+
+        return neighborhood_list
 
     def torus_adj(self, pos: Coordinate) -> Coordinate:
         """Convert coordinate, handling torus looping."""
