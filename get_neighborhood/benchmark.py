@@ -36,7 +36,7 @@ tic = time.time()
 for i in range(repetition):
     a = grid2.get_neighborhood((10, 10), True, 10)
     [j for j in a]
-print_elapsed("cython")
+print_elapsed("cython np.ndarray")
 
 import tortar
 tic = time.time()
@@ -53,7 +53,7 @@ tic = time.time()
 for i in range(repetition):
     a = get_neighborhood(30, 30, (10, 10), True, 10).tolist()
     [j for j in a]
-print_elapsed("numba")
+print_elapsed("numba np.ndarray")
 
 get_neighborhood_typed_list(30, 30, (10, 10), True, 10)
 tic = time.time()
@@ -61,3 +61,10 @@ for i in range(repetition):
     a = get_neighborhood_typed_list(30, 30, (10, 10), True, 10)
     [j for j in a]
 print_elapsed("numba typed list")
+
+from cython_array import compute_neighborhood_array
+tic = time.time()
+for i in range(repetition):
+    a = compute_neighborhood_array((10, 10), True, 10, 30, 30)
+    #list(zip(*a))
+print_elapsed("cython array")
