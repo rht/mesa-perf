@@ -53,60 +53,59 @@ cdef class Grid:
  
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef int[:, :] get_neighborhood(
-        self,
-        object pos,
-        bint moore,
-        #include_center: bool = False,
-        int radius,
-    ):
-        #cache_key = (pos, moore, include_center, radius)
-        #neighborhood = self._neighborhood_cache.get(cache_key, None)
+    cpdef int[:, :] get_neighborhood(self, object pos, bint moore, bint include_center, int radius):
 
-        #if neighborhood is not None:
-        #    return neighborhood
-
-        # We use a list instead of a dict for the neighborhood because it would
-        # be easier to port the code to Cython or Numba (for performance
-        # purpose), with minimal changes. To better understand how the
-        # algorithm was conceived, look at
-        # https://github.com/projectmesa/mesa/pull/1476#issuecomment-1306220403
-        # and the discussion in that PR in general.
-        #neighborhood = []
-
-        #assert not self.torus
-
-        # cdef int radius
-
-        cdef int x, y
-        x, y = pos
-        cdef int xfrom, xto
-        cdef int yfrom, yto
-        xfrom = max(0, x - radius)
-        xto = min(self.width, x + radius + 1)
-        yfrom = max(0, y - radius)
-        yto = min(self.height, y + radius + 1)
-
-        cdef int max_neighborhood_count
-        max_neighborhood_count = (xto - xfrom) * (yto - yfrom)
         cdef int[:, :] neighborhood
-        neighborhood = np.empty((max_neighborhood_count, 2), int)
-
-        cdef int count
-        cdef int nx, ny
+        cdef int x_radius, y_radius, dx, dy, nx, ny, kx, ky
+        cdef int min_x_range, max_x_range, min_y_range, max_y_range
+        cdef int x, y, count
+        
+        neighborhood = np.empty(((radius*2+1)**2, 2), int)
+        x, y = pos
         count = 0
-        for nx in range(xfrom, xto):
-            for ny in range(yfrom, yto):
-                if not moore and abs(nx - x) + abs(ny - y) > radius:
-                    continue
-                neighborhood[count, 0] = nx
-                neighborhood[count, 1] = ny
-                count += 1
+        if self.torus:
 
-        #if not include_center and neighborhood:
-        #    neighborhood.remove(pos)
+            x_max_radius, y_max_radius = self.width // 2, self.height // 2
 
-        #self._neighborhood_cache[cache_key] = neighborhood
+            x_radius, y_radius = min(radius, x_max_radius), min(radius, y_max_radius)
+
+            xdim_even, ydim_even = (self.width + 1) % 2, (self.height + 1) % 2
+            kx = 1 if x_radius == x_max_radius and xdim_even else 0
+            ky = 1 if y_radius == y_max_radius and ydim_even else 0
+
+            for dx in range(-x_radius, x_radius + 1 - kx):
+                for dy in range(-y_radius, y_radius + 1 - ky):
+
+                    if not moore and abs(dx) + abs(dy) > radius:
+                        continue
+
+                    nx = (x + dx) % self.width
+                    ny = (y + dy) % self.height
+
+                    if nx == x and ny == y and not include_center:
+                        continue
+                    
+                    neighborhood[count, 0] = nx
+                    neighborhood[count, 1] = ny
+                    count += 1
+        else:
+            min_x_range = max(0, x - radius)
+            max_x_range = min(self.width, x + radius + 1)
+            min_y_range = max(0, y - radius)
+            max_y_range = min(self.height, y + radius + 1)
+
+            for nx in range(min_x_range, max_x_range):
+                for ny in range(min_y_range, max_y_range):
+
+                    if not moore and abs(nx - x) + abs(ny - y) > radius:
+                        continue
+
+                    if nx == x and ny == y and not include_center:
+                        continue
+                    
+                    neighborhood[count, 0] = nx
+                    neighborhood[count, 1] = ny
+                    count += 1
 
         return neighborhood[:count]
 
