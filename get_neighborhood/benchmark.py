@@ -14,7 +14,7 @@ def empty():
     return
 """
 stmt = "empty()"
-print("empty python", time_elapsed(setup, stmt, repetition))
+print("python empty", time_elapsed(setup, stmt, repetition))
 
 setup = """
 import cython_grid
