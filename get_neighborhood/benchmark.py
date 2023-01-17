@@ -5,11 +5,8 @@ repetition = 1000
 def time_elapsed(setup, stmt, repetition):
     return "{:.3f} μs".format(timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition)
 
-setup = """
-from mesa.space import Grid
-grid = Grid(30, 30, True)
-"""
-stmt = "grid._neighborhood_cache = {}; grid.get_neighborhood((10, 10), True, True, 10)"
+setup = """import pure_python"""
+stmt = "pure_python.get_neighborhood((10, 10), True, True, 10, False, 30, 30)"
 print("default", time_elapsed(setup, stmt, repetition))
 
 setup = """
