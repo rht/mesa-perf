@@ -32,6 +32,7 @@ print_elapsed("default", setup, stmt)
 
 
 setup = """
+import mesa
 import cython_grid
 import random
 random.seed(1)
@@ -39,7 +40,7 @@ width = 30
 height = 30
 grid = cython_grid.Grid(width, height)
 for i in range(10):
-    agent = i
+    agent = mesa.Agent(i, None)
     while True:
         x = random.randrange(width)
         y = random.randrange(height)

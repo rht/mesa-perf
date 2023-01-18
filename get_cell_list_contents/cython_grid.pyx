@@ -12,6 +12,7 @@ cdef class Grid:
     cdef bint torus
     cdef int num_cells
     cdef long[:, :] _grid
+    cdef dict agent_map
 
     def __init__(self, width: int, height: int) -> None:
         self.height = height
@@ -22,6 +23,8 @@ cdef class Grid:
         # self._grid = np.empty((self.width, self.height), self.default_val())
         self._grid = np.full((self.width, self.height), self.default_val(), dtype=long)
 
+        self.agent_map = {}
+
     cpdef long default_val(self):
         return -1
 
@@ -30,11 +33,14 @@ cdef class Grid:
         x, y = pos
         return self._grid[x, y] == self.default_val()
 
-    cpdef place_agent(self, agent_id, pos):
+    cpdef place_agent(self, agent, pos):
         cdef long x, y
+        cdef int agent_id
         if self.is_cell_empty(pos):
             x, y = pos
+            agent_id = agent.unique_id
             self._grid[x, y] = agent_id
+            self.agent_map[agent_id] = agent
         else:
             raise Exception("Cell not empty")
 
@@ -65,7 +71,7 @@ cdef class Grid:
         cdef list out_list
         out_list = [0] * count
         for i in range(count):
-            out_list[i] = out[i]
+            out_list[i] = self.agent_map[out[i]]
         return out_list
 
     # This get_neighborhood is identical to the
