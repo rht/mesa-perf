@@ -38,7 +38,7 @@ import random
 random.seed(1)
 width = 30
 height = 30
-grid = cython_grid.Grid(width, height)
+grid = cython_grid.{0}(width, height)
 for i in range(10):
     agent = mesa.Agent(i, None)
     while True:
@@ -50,4 +50,7 @@ for i in range(10):
 cell_list = grid.get_neighborhood((10, 10), True, 10)
 """
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython list", setup, stmt)
+print_elapsed("cython np.ndarray", setup.format("Grid"), stmt)
+
+stmt = "grid.get_cell_list_contents(cell_list)"
+print_elapsed("cython list-of-list", setup.format("GridLoL"), stmt)
