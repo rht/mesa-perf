@@ -11,12 +11,13 @@ def compute_neighborhood(
     height: cython.int,
 ) -> list:
 
-    neighborhood: list = []
+    neighborhood: list = [0] * (width * height)
 
     x: cython.int
     y: cython.int
     x, y = pos
     n_pos: (cython.int, cython.int)
+    count: cython.int = 0
     if torus:
         x_max_radius, y_max_radius = width // 2, height // 2
 
@@ -37,7 +38,8 @@ def compute_neighborhood(
                     continue
 
                 n_pos = (x + dx) % width, (y + dy) % height
-                neighborhood.append(n_pos)
+                neighborhood[count] = n_pos
+                count += 1
     else:
         min_x_range: cython.int = max(0, x - radius)
         max_x_range: cython.int = min(width, x + radius + 1)
@@ -53,9 +55,10 @@ def compute_neighborhood(
                     continue
 
                 n_pos = (nx, ny)
-                neighborhood.append(n_pos)
+                neighborhood[count] = n_pos
+                count += 1
 
     if not include_center:
         neighborhood.remove(pos)
 
-    return neighborhood
+    return neighborhood[:count]
