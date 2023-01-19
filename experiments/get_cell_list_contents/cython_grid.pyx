@@ -88,9 +88,7 @@ cdef class Grid:
         count = 0
         default_val = self.default_val()
         for i in range(length):
-            pos = cell_list[i]
-            x = pos[0]
-            y = pos[1]
+            x, y = cell_list[i, 0], cell_list[i, 1]
             if self._grid[x, y] == default_val:
                 continue
             out[count] = self._grid[x, y]
