@@ -1,4 +1,4 @@
-# cython: infer_types=True
+# cython: infer_types=True, language_level=3
 
 cimport cython
 import numpy as np
@@ -23,7 +23,7 @@ cdef class _Grid:
         self.agent_map = {}
 
     cpdef long default_val(self):
-        return None
+        return -1
 
     cpdef is_cell_empty(self, pos):
         cdef long x, y

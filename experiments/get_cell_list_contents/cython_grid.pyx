@@ -1,4 +1,4 @@
-# cython: infer_types=True
+# cython: infer_types=True, language_level=3
 import itertools
 
 cimport cython
