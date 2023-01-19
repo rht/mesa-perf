@@ -1,70 +1,40 @@
-import time
-
-#import mesa
-import pure_python
+import timeit
 
 repetition = 1000
 
-def print_elapsed(label):
-    global tic
-    print(label, round((time.time() - tic) / repetition * 1e6, 3), "μs")
+def time_elapsed(setup, stmt, repetition):
+    return "{:.3f} μs".format(timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition)
 
-#grid = mesa.space.SingleGrid(30, 30, False)
-#tic = time.time()
-#for i in range(30):
-#    grid._neighborhood_cache = {}
-#    grid.get_neighborhood((10, 10), True, include_center=True, radius=10)
-#print("default", time.time() - tic)
-tic = time.time()
-for i in range(repetition):
-    a = pure_python.get_neighborhood((10, 10), True, True, 10, False, 30, 30)
-    [j for j in a]
-print_elapsed("default")
+setup = """import pure_python"""
+stmt = "pure_python.get_neighborhood((10, 10), True, True, 10, False, 30, 30)"
+print("default", time_elapsed(setup, stmt, repetition))
 
+setup = """
 def empty():
     return
+"""
+stmt = "empty()"
+print("python empty", time_elapsed(setup, stmt, repetition))
 
-tic = time.time()
-for i in range(repetition):
-    empty()
-print_elapsed("empty_function")
-
+setup = """
 import cython_grid
-
 grid2 = cython_grid.Grid(30, 30)
-tic = time.time()
-for i in range(repetition):
-    a = grid2.get_neighborhood((10, 10), True, 10)
-    [j for j in a]
-print_elapsed("cython np.ndarray")
+"""
+stmt = "grid2.get_neighborhood((10, 10), True, 10)"
+print("cython np.array", time_elapsed(setup, stmt, repetition))
 
-import tortar
-tic = time.time()
-for i in range(repetition):
-    a = tortar.compute_neighborhood((10, 10), True, True, 10, False, 30, 30)
-    [j for j in a]
-print_elapsed("cython list")
+setup = "import tortar"
+stmt = "tortar.compute_neighborhood((10, 10), True, True, 10, False, 30, 30)"
+print("cython list", time_elapsed(setup, stmt, repetition))
 
-from numba_version import get_neighborhood, get_neighborhood_typed_list
+setup = "from numba_version import get_neighborhood; get_neighborhood(30, 30, (10, 10), True, 10)"
+stmt = "get_neighborhood(30, 25, (10, 10), True, 10)"
+print("numba np.array", time_elapsed(setup, stmt, repetition))
 
-get_neighborhood(30, 30, (10, 10), True, 10)
-# print(get_neighborhood.inspect_types())
-tic = time.time()
-for i in range(repetition):
-    a = get_neighborhood(30, 30, (10, 10), True, 10)
-    [j for j in a]
-print_elapsed("numba np.ndarray")
+setup = "from numba_version import get_neighborhood_typed_list"
+stmt = "get_neighborhood_typed_list(30, 30, (10, 10), True, 10)"
+print("numba typed_list", time_elapsed(setup, stmt, repetition))
 
-get_neighborhood_typed_list(30, 30, (10, 10), True, 10)
-tic = time.time()
-for i in range(repetition):
-    a = get_neighborhood_typed_list(30, 30, (10, 10), True, 10)
-    [j for j in a]
-print_elapsed("numba typed list")
-
-from cython_array import compute_neighborhood_array
-tic = time.time()
-for i in range(repetition):
-    a = compute_neighborhood_array((10, 10), True, 10, 30, 30)
-    #list(zip(*a))
-print_elapsed("cython array")
+setup = "from cython_array import compute_neighborhood_array"
+stmt = "compute_neighborhood_array((10, 10), True, 10, 30, 30)"
+print("cython array", time_elapsed(setup, stmt, repetition))
