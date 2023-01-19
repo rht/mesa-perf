@@ -18,7 +18,7 @@ print("python empty", time_elapsed(setup, stmt, repetition))
 
 setup = """
 import cython_grid
-grid2 = cython_grid.Grid(30, 30, False)
+grid2 = cython_grid.Grid(30, 30)
 """
 stmt = "grid2.get_neighborhood((10, 10), True, 10)"
 print("cython np.array", time_elapsed(setup, stmt, repetition))
