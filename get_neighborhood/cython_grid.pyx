@@ -52,6 +52,7 @@ cdef class Grid:
         return -1
 
     @cython.boundscheck(False)
+    @cython.wraparound(False)
     cpdef list get_neighborhood(
         self,
         object pos,

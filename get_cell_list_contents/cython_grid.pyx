@@ -44,8 +44,8 @@ cdef class Grid:
         else:
             raise Exception("Cell not empty")
 
+    @cython.wraparound(False)
     @cython.boundscheck(False)
-    #cpdef long[:] get_cell_list_contents(self, list cell_list):
     cpdef list get_cell_list_contents(self, list cell_list):
         length = len(cell_list)
         cdef long[:] out
@@ -58,9 +58,9 @@ cdef class Grid:
         count = 0
         default_val = self.default_val()
         for i in range(length):
-            x, y = cell_list[i]
-            #x = cell_list[i, 0]
-            #y = cell_list[i, 1]
+            pos = cell_list[i]
+            x = pos[0]
+            y = pos[1]
             if self._grid[x, y] == default_val:
                 continue
             out[count] = self._grid[x, y]
@@ -74,10 +74,35 @@ cdef class Grid:
             out_list[i] = self.agent_map[out[i]]
         return out_list
 
+    @cython.wraparound(False)
+    @cython.boundscheck(False)
+    cpdef long[:] get_cell_list_contents_memoryview(self, long[:, :] cell_list):
+        length = len(cell_list)
+        cdef long[:] out
+        out = np.empty(length, long)
+
+        cdef int count
+        cdef long default_val
+        cdef long x, y
+
+        count = 0
+        default_val = self.default_val()
+        for i in range(length):
+            pos = cell_list[i]
+            x = pos[0]
+            y = pos[1]
+            if self._grid[x, y] == default_val:
+                continue
+            out[count] = self._grid[x, y]
+            count += 1
+
+        return out[:count]
+
     # This get_neighborhood is identical to the
     # get_neighborhood in
     # https://github.com/rht/mesa_perf/blob/main/get_neighborhood/cython_grid.pyx
     @cython.boundscheck(False)
+    @cython.wraparound(False)
     cpdef list get_neighborhood(
         self,
         object pos,
@@ -121,6 +146,42 @@ cdef class Grid:
             neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
 
         return neighborhood_list
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cpdef long[:, :] get_neighborhood_memoryview(
+        self,
+        object pos,
+        bint moore,
+        #include_center: bool = False,
+        int radius,
+    ):
+        cdef int x, y
+        x, y = pos
+        cdef int xfrom, xto
+        cdef int yfrom, yto
+        xfrom = max(0, x - radius)
+        xto = min(self.width, x + radius + 1)
+        yfrom = max(0, y - radius)
+        yto = min(self.height, y + radius + 1)
+
+        cdef int max_neighborhood_count
+        max_neighborhood_count = (xto - xfrom) * (yto - yfrom)
+        cdef long[:, :] neighborhood
+        neighborhood = np.empty((max_neighborhood_count, 2), long)
+
+        cdef int count
+        cdef int nx, ny
+        count = 0
+        for nx in range(xfrom, xto):
+            for ny in range(yfrom, yto):
+                if not moore and abs(nx - x) + abs(ny - y) > radius:
+                    continue
+                neighborhood[count, 0] = nx
+                neighborhood[count, 1] = ny
+                count += 1
+
+        return neighborhood[:count]
 
 
 cdef class GridLoL:

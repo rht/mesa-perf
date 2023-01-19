@@ -52,5 +52,17 @@ cell_list = grid.get_neighborhood((10, 10), True, 10)
 stmt = "grid.get_cell_list_contents(cell_list)"
 print_elapsed("cython np.ndarray", setup.format("Grid"), stmt)
 
-stmt = "grid.get_cell_list_contents(cell_list)"
 print_elapsed("cython list-of-list", setup.format("GridLoL"), stmt)
+
+stmt = "grid.get_cell_list_contents_memoryview(cell_list)"
+print_elapsed(
+    "cython memoryview-only",
+    setup.format("Grid").replace("get_neighborhood", "get_neighborhood_memoryview"),
+    stmt,
+)
+
+# print_elapsed(
+#    "numba np.ndarray",
+#    setup.format("Grid").replace("cython_grid", "numba_version"),
+#    stmt,
+# )
