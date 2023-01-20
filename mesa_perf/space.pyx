@@ -44,13 +44,14 @@ cdef class _Grid:
     @cython.wraparound(False)
     @cython.boundscheck(False)
     cpdef list get_cell_list_contents(self, object cell_list):
-        cdef long default_val, x, y,i
+        cdef long default_val, x, y
         cdef int count
         cdef long[:] ids_mview
+        cdef list agent_list
 
         length = len(cell_list)
         ids_mview = np.ndarray(length, long)
-
+        
         count = 0
         default_val = self.default_val()
         for i in range(length):
@@ -70,13 +71,12 @@ cdef class _Grid:
     @cython.wraparound(False)
     @cython.boundscheck(False)
     cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
-
-        cdef long[:, :] neighborhood
-        cdef list neighborhood_list
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
         cdef int x, y, count
+        cdef long[:, :] neighborhood
+        cdef list neighborhood_list
         
         neighborhood = np.empty(((radius*2+1)**2, 2), int)
         x, y = pos
@@ -124,7 +124,7 @@ cdef class _Grid:
                     neighborhood[count, 1] = ny
                     count += 1
         
-        neighborhood_list = [0]*count
+        neighborhood_list = [0] * count
         for i in range(count):
             neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
         return neighborhood_list
@@ -247,7 +247,7 @@ cdef class _Grid_NoMap:
                     neighborhood[count, 1] = ny
                     count += 1
 
-        neighborhood_list = [0]*count
+        neighborhood_list = [0] * count
         for i in range(count):
             neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
         return neighborhood_list
