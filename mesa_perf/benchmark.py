@@ -33,12 +33,12 @@ print_elapsed("python get_cell_list_contents", setup, stmt)
 
 setup = """
 import mesa
-from {} import _Grid
+from space import {0}
 import random
 random.seed(1)
 width = 100
 height = 100
-grid = _Grid(width, height, False)
+grid = {0}(width, height, False)
 for i in range(0):
     agent = mesa.Agent(i, None)
     while True:
@@ -51,13 +51,13 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius=10
 """
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius=10)"
-print_elapsed("cython with map get_neighborhood", setup.format("space"), stmt)
+print_elapsed("cython with map get_neighborhood", setup.format("_Grid"), stmt)
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython with map get_cell_list_contents", setup.format("space"), stmt)
+print_elapsed("cython with map get_cell_list_contents", setup.format("_Grid"), stmt)
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius=10)"
-print_elapsed("cython get_neighborhood", setup.format("space_2"), stmt)
+print_elapsed("cython get_neighborhood", setup.format("_Grid_NoMap"), stmt)
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython get_cell_list_contents", setup.format("space_2"), stmt)
+print_elapsed("cython get_cell_list_contents", setup.format("_Grid_NoMap"), stmt)
