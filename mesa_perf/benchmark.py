@@ -12,10 +12,10 @@ setup = """
 import mesa
 import random
 random.seed(1)
-width = 30
-height = 30
+width = 100
+height = 100
 grid = mesa.space.SingleGrid(width, height, False)
-for i in range(10):
+for i in range(0):
     agent = mesa.Agent(i, None)
     while True:
         x = random.randrange(width)
@@ -23,7 +23,7 @@ for i in range(10):
         if grid.is_cell_empty((x, y)):
             break
     grid.place_agent(agent, (x, y))
-cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius=1)
+cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius=10)
 """
 stmt = "grid._neighborhood_cache = {}; grid.get_neighborhood((10, 10), True, include_center=True, radius=10)"
 print_elapsed("python get_neighborhood", setup, stmt)
@@ -33,13 +33,13 @@ print_elapsed("python get_cell_list_contents", setup, stmt)
 
 setup = """
 import mesa
-import space
+from {} import _Grid
 import random
 random.seed(1)
 width = 100
 height = 100
-grid = space._Grid(width, height, False)
-for i in range(10):
+grid = _Grid(width, height, False)
+for i in range(0):
     agent = mesa.Agent(i, None)
     while True:
         x = random.randrange(width)
@@ -47,11 +47,17 @@ for i in range(10):
         if grid.is_cell_empty((x, y)):
             break
     grid.place_agent(agent, (x, y))
-cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius=1)
+cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius=10)
 """
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius=10)"
-print_elapsed("cython get_neighborhood", setup, stmt)
+print_elapsed("cython with map get_neighborhood", setup.format("space"), stmt)
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython get_cell_list_contents", setup, stmt)
+print_elapsed("cython with map get_cell_list_contents", setup.format("space"), stmt)
+
+stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius=10)"
+print_elapsed("cython get_neighborhood", setup.format("space_2"), stmt)
+
+stmt = "grid.get_cell_list_contents(cell_list)"
+print_elapsed("cython get_cell_list_contents", setup.format("space_2"), stmt)
