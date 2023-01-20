@@ -121,12 +121,6 @@ cdef class _Grid:
                     count += 1
 
         return [(neighborhood[i, 0], neighborhood[i, 1]) for i in range(count)]
-    
-# cython: infer_types=True, language_level=3
-
-cimport cython
-import numpy as np
-
 
 cdef class _Grid_NoMap:
     cdef long height, width, num_cells
