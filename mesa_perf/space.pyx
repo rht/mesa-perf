@@ -44,7 +44,7 @@ cdef class _Grid:
     @cython.wraparound(False)
     @cython.boundscheck(False)
     cpdef list get_cell_list_contents(self, object cell_list):
-        cdef long default_val, x, y
+        cdef long default_val, x, y,i
         cdef int count
         cdef long[:] ids_mview
 
@@ -62,13 +62,17 @@ cdef class _Grid:
             ids_mview[count] = id_agent
             count += 1
         
-        return [self._agent_map[k] for k in ids_mview[:count]]
+        agent_list = [0] * count
+        for i in range(count):
+            agent_list[i] = self._agent_map[ids_mview[i]]
+        return agent_list
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
     cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
 
         cdef long[:, :] neighborhood
+        cdef list neighborhood_list
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
@@ -119,8 +123,11 @@ cdef class _Grid:
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
-
-        return [(neighborhood[i, 0], neighborhood[i, 1]) for i in range(count)]
+        
+        neighborhood_list = [0]*count
+        for i in range(count):
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+        return neighborhood_list
 
 cdef class _Grid_NoMap:
     cdef long height, width, num_cells
@@ -162,6 +169,7 @@ cdef class _Grid_NoMap:
         cdef long x, y
         cdef int count
         cdef long[:] ids_mview
+        cdef list agent_list
 
         length = len(cell_list)
         agent_mview = np.ndarray(length, object)
@@ -177,13 +185,17 @@ cdef class _Grid_NoMap:
             agent_mview[count] = agent
             count += 1
         
-        return [agent for agent in agent_mview[:count]]
+        agent_list = [0] * count
+        for i in range(count):
+            agent_list[i] = agent_mview[i]
+        return agent_list
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
     cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
 
         cdef long[:, :] neighborhood
+        cdef list neighborhood_list
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
@@ -235,4 +247,7 @@ cdef class _Grid_NoMap:
                     neighborhood[count, 1] = ny
                     count += 1
 
-        return [(neighborhood[i, 0], neighborhood[i, 1]) for i in range(count)]
+        neighborhood_list = [0]*count
+        for i in range(count):
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+        return neighborhood_list
