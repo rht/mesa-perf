@@ -59,7 +59,7 @@ cdef class _Grid:
             agent_mview[count] = agent
             count += 1
         
-        return [agent for k in agent_mview[:count]]
+        return [agent for agent in agent_mview[:count]]
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
