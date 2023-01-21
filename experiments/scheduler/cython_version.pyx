@@ -80,7 +80,6 @@ cdef class SchedulerMap:
     def __init__(self, object model, bint shuffle):
         self.model = model
         self.shuffle = shuffle
-        self._agents_dict = {}
 
     cpdef add(self, agent):
         self._agents[agent.unique_id] = <PyObjectPtr>agent
