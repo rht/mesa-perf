@@ -27,6 +27,7 @@ print_elapsed(
     setup.format("mesa", "mesa.time.RandomActivation", "mesa.Agent", ""),
     stmt,
 )
+print()
 
 
 # print_elapsed(
@@ -39,18 +40,27 @@ print_elapsed(
     "cython python dict",
     "import cython_version\n"
     + setup.format(
-        "mesa", "cython_version.SchedulerPythonDict", "mesa.Agent", ", False"
+        "mesa", "cython_version.SchedulerPythonDict", "mesa.Agent", ", False, False"
     ),
     stmt,
 )
 print_elapsed(
-    "cython python dict shuffled",
+    "cython python dict, shuffled",
     "import cython_version\n"
     + setup.format(
-        "mesa", "cython_version.SchedulerPythonDict", "mesa.Agent", ", True"
+        "mesa", "cython_version.SchedulerPythonDict", "mesa.Agent", ", True, False"
     ),
     stmt,
 )
+print_elapsed(
+    "cython python dict, cython shuffled",
+    "import cython_version\n"
+    + setup.format(
+        "mesa", "cython_version.SchedulerPythonDict", "mesa.Agent", ", True, True"
+    ),
+    stmt,
+)
+print()
 
 
 print_elapsed(
@@ -60,7 +70,7 @@ print_elapsed(
         "mesa",
         "cython_version.SchedulerDictCythonizedAgent",
         "cython_version.Agent",
-        ", False",
+        ", False, False",
     ),
     stmt,
 )
@@ -71,10 +81,23 @@ print_elapsed(
         "mesa",
         "cython_version.SchedulerDictCythonizedAgent",
         "cython_version.Agent",
-        ", True",
+        ", True, False",
     ),
     stmt,
 )
+print_elapsed(
+    "cython python dict, cython agent, cython shuffled",
+    "import cython_version\n"
+    + setup.format(
+        "mesa",
+        "cython_version.SchedulerDictCythonizedAgent",
+        "cython_version.Agent",
+        ", True, True",
+    ),
+    stmt,
+)
+
+print()
 
 
 print_elapsed(
@@ -84,7 +107,7 @@ print_elapsed(
         "mesa",
         "cython_version.SchedulerMap",
         "cython_version.Agent",
-        ", False",
+        ", False, False",
     ),
     stmt,
 )
@@ -95,10 +118,22 @@ print_elapsed(
         "mesa",
         "cython_version.SchedulerMap",
         "cython_version.Agent",
-        ", True",
+        ", True, False",
     ),
     stmt,
 )
+print_elapsed(
+    "cython map, cython agent, cython shuffled",
+    "import cython_version\n"
+    + setup.format(
+        "mesa",
+        "cython_version.SchedulerMap",
+        "cython_version.Agent",
+        ", True, True",
+    ),
+    stmt,
+)
+
 
 
 # print_elapsed(

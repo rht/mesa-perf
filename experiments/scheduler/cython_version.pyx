@@ -7,19 +7,75 @@ from cpython.ref cimport PyObject
 import numpy as np
 # from numpy.random import default_rng
 
+# For shuffle
+from libc.stdlib cimport rand
+from libc.math cimport floor
+from libcpp.vector cimport vector
+
 
 ctypedef PyObject* PyObjectPtr
+
+# https://stackoverflow.com/questions/16138090/correct-way-to-generate-random-numbers-in-cython
+cdef extern from "stdlib.h":
+    int RAND_MAX
+
+# https://gist.github.com/JenkinsDev/1e4bff898c72ec55df6f
+@cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.nonecheck(False)
+cdef void fisher_yates_shuffle(long[:] the_list) nogil:
+    cdef int amnt_to_shuffle
+    with gil:
+        amnt_to_shuffle = len(the_list)
+    cdef int i
+    cdef long a, b
+    cdef float rnd
+    while amnt_to_shuffle > 1:
+        rnd = rand() / RAND_MAX
+        i = int(floor(rnd * amnt_to_shuffle))
+        amnt_to_shuffle -= 1
+        a = the_list[i]
+        b = the_list[amnt_to_shuffle]
+        the_list[i] = b
+        the_list[amnt_to_shuffle] = a
+
+
+@cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.cdivision(True)
+@cython.nonecheck(False)
+cdef void fisher_yates_shuffle_vector(list input_list) nogil:
+    cdef vector[long] the_list
+    cdef int amnt_to_shuffle
+    with gil:
+        the_list = input_list
+        amnt_to_shuffle = len(the_list)
+    cdef int i
+    cdef long a, b
+    cdef float rnd
+    while amnt_to_shuffle > 1:
+        rnd = rand() / RAND_MAX
+        i = int(floor(rnd * amnt_to_shuffle))
+        amnt_to_shuffle -= 1
+        a = the_list[i]
+        b = the_list[amnt_to_shuffle]
+        the_list[i] = b
+        the_list[amnt_to_shuffle] = a
+
 
 cdef class SchedulerPythonDict:
     cdef object model
     cdef dict _agents
     cdef bint shuffle
+    cdef bint fisher_yates
     # cdef object rng
-    def __init__(self, object model, bint shuffle):
+    def __init__(self, object model, bint shuffle, bint fisher_yates):
         self.model = model
         self._agents = {}
         self.shuffle = shuffle
         # self.rng = default_rng(model.random.randint(0, 1000_000))
+        self.fisher_yates = fisher_yates
 
     cpdef add(self, object agent):
         self._agents[agent.unique_id] = agent
@@ -29,7 +85,10 @@ cdef class SchedulerPythonDict:
         if self.shuffle:
             # for agent_key in agent_keys[np.random.permutation(len(agent_keys))]:
             # self.model.random.shuffle(agent_keys)
-            np.random.shuffle(agent_keys)
+            if self.fisher_yates:
+                fisher_yates_shuffle_vector(agent_keys)
+            else:
+                np.random.shuffle(agent_keys)
             # self.rng.shuffle(agent_keys)
         for agent_key in agent_keys:
             self._agents[agent_key].step()
@@ -50,10 +109,12 @@ cdef class SchedulerDictCythonizedAgent:
     cdef object model
     cdef dict _agents
     cdef bint shuffle
-    def __init__(self, object model, bint shuffle):
+    cdef bint fisher_yates
+    def __init__(self, object model, bint shuffle, bint fisher_yates):
         self.model = model
         self._agents = {}
         self.shuffle = shuffle
+        self.fisher_yates = fisher_yates
 
     cpdef add(self, Agent agent):
         self._agents[agent.unique_id] = agent
@@ -65,7 +126,10 @@ cdef class SchedulerDictCythonizedAgent:
         agent_keys = list(self._agents.keys())
         if self.shuffle:
             # self.model.random.shuffle(agent_keys)
-            np.random.shuffle(agent_keys)
+            if self.fisher_yates:
+                fisher_yates_shuffle_vector(agent_keys)
+            else:
+                np.random.shuffle(agent_keys)
         for agent_key in agent_keys:
             agent = self._agents[agent_key]
             agent.step()
@@ -78,10 +142,12 @@ cdef class SchedulerMap:
     cdef cpp_map[long, PyObjectPtr] _agents
     cdef bint shuffle
     cdef dict _agents_dict
-    def __init__(self, object model, bint shuffle):
+    cdef bint fisher_yates
+    def __init__(self, object model, bint shuffle, bint fisher_yates):
         self.model = model
         self.shuffle = shuffle
         self._agents_dict = {}
+        self.fisher_yates = fisher_yates
 
     cpdef add(self, agent):
         self._agents[agent.unique_id] = <PyObjectPtr>agent
@@ -103,7 +169,10 @@ cdef class SchedulerMap:
             count += 1
 
         if self.shuffle:
-            np.random.shuffle(agent_keys)
+            if self.fisher_yates:
+                fisher_yates_shuffle(agent_keys)
+            else:
+                np.random.shuffle(agent_keys)
 
         cdef long agent_key
         cdef Agent agent
