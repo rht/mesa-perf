@@ -15,20 +15,31 @@ import {0}
 model = {0}.Model()
 schedule = {1}(model)
 for i in range(200):
-    agent = {0}.Agent(i, model)
+    agent = {2}(i, model)
     schedule.add(agent)
 """
 stmt = "schedule.step()"
-print_elapsed("default", setup.format("mesa", "mesa.time.RandomActivation"), stmt)
+print_elapsed(
+    "default", setup.format("mesa", "mesa.time.RandomActivation", "mesa.Agent"), stmt
+)
 
 print_elapsed(
     "numba typed dict",
-    setup.format("numba_version", "numba_version.Scheduler"),
+    setup.format("numba_version", "numba_version.Scheduler", "numba_version.Agent"),
     stmt,
 )
 
 print_elapsed(
     "cython python dict",
-    "import cython_version\n" + setup.format("mesa", "cython_version.SchedulerPythonDict"),
+    "import cython_version\n"
+    + setup.format("mesa", "cython_version.SchedulerPythonDict", "mesa.Agent"),
+    stmt,
+)
+print_elapsed(
+    "cython python dict, cython agent",
+    "import cython_version\n"
+    + setup.format(
+        "mesa", "cython_version.SchedulerPythonDict", "cython_version.Agent"
+    ),
     stmt,
 )
