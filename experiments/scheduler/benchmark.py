@@ -88,6 +88,19 @@ print_elapsed(
     ),
     stmt,
 )
+print_elapsed(
+    "cython map, cython agent shuffled",
+    "import cython_version\n"
+    + setup.format(
+        "mesa",
+        "cython_version.SchedulerMap",
+        "cython_version.Agent",
+        ", True",
+    ),
+    stmt,
+)
+
+
 # print_elapsed(
 #     "cython map-dict-cast, cython agent",
 #     "import cython_version\n"

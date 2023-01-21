@@ -102,6 +102,9 @@ cdef class SchedulerMap:
             postincrement(it)
             count += 1
 
+        if self.shuffle:
+            np.random.shuffle(agent_keys)
+
         cdef long agent_key
         cdef Agent agent
         for i in range(count):
