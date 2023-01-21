@@ -77,12 +77,16 @@ cdef class SchedulerMap:
     cdef object model
     cdef cpp_map[long, PyObjectPtr] _agents
     cdef bint shuffle
+    cdef dict _agents_dict
     def __init__(self, object model, bint shuffle):
         self.model = model
         self.shuffle = shuffle
+        self._agents_dict = {}
 
     cpdef add(self, agent):
         self._agents[agent.unique_id] = <PyObjectPtr>agent
+        # The agent must be put in the dict, otherwise it gets gc-ed
+        self._agents_dict[agent.unique_id] = agent
 
     cpdef step(self):
         cdef cpp_map[long, PyObjectPtr].iterator it = self._agents.begin()
