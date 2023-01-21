@@ -2,15 +2,18 @@
 cimport cython
 # from libcpp.map cimport map as cpp_map
 import numpy as np
+# from numpy.random import default_rng
 
 cdef class SchedulerPythonDict:
     cdef object model
     cdef dict _agents
     cdef bint shuffle
+    # cdef object rng
     def __init__(self, object model, bint shuffle):
         self.model = model
         self._agents = {}
         self.shuffle = shuffle
+        # self.rng = default_rng(model.random.randint(0, 1000_000))
 
     cpdef add(self, object agent):
         self._agents[agent.unique_id] = agent
@@ -18,8 +21,10 @@ cdef class SchedulerPythonDict:
     def step(self):
         agent_keys = list(self._agents.keys())
         if self.shuffle:
-            #for agent_key in agent_keys[np.random.permutation(len(agent_keys))]:
-            self.model.random.shuffle(agent_keys)
+            # for agent_key in agent_keys[np.random.permutation(len(agent_keys))]:
+            # self.model.random.shuffle(agent_keys)
+            np.random.shuffle(agent_keys)
+            # self.rng.shuffle(agent_keys)
         for agent_key in agent_keys:
             self._agents[agent_key].step()
 
@@ -53,7 +58,8 @@ cdef class SchedulerDictCythonizedAgent:
         cdef long agent_key
         agent_keys = list(self._agents.keys())
         if self.shuffle:
-            self.model.random.shuffle(agent_keys)
+            # self.model.random.shuffle(agent_keys)
+            np.random.shuffle(agent_keys)
         for agent_key in agent_keys:
             agent = self._agents[agent_key]
             agent.step()
