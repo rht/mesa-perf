@@ -51,7 +51,7 @@ cdef class _Grid:
 
         length = len(cell_list)
         ids_mview = np.ndarray(length, long)
-        
+
         count = 0
         default_val = self.default_val()
         for i in range(length):
@@ -62,7 +62,7 @@ cdef class _Grid:
                 continue
             ids_mview[count] = id_agent
             count += 1
-        
+
         agent_list = [0] * count
         for i in range(count):
             agent_list[i] = self._agent_map[ids_mview[i]]
@@ -77,7 +77,7 @@ cdef class _Grid:
         cdef int x, y, count
         cdef long[:, :] neighborhood
         cdef list neighborhood_list
-        
+
         neighborhood = np.empty(((radius*2+1)**2, 2), int)
         x, y = pos
         count = 0
@@ -101,7 +101,7 @@ cdef class _Grid:
 
                     if nx == x and ny == y and not include_center:
                         continue
-                    
+
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
@@ -119,14 +119,18 @@ cdef class _Grid:
 
                     if nx == x and ny == y and not include_center:
                         continue
-                    
+
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
-        
-        neighborhood_list = [0] * count
+
+        neighborhood_list = [[0, 0]] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+            # We do this instead of
+            # "neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])"
+            # because tuple creation is expensive
+            neighborhood_list[i][0] = neighborhood[i, 0]
+            neighborhood_list[i][1] = neighborhood[i, 1]
         return neighborhood_list
 
 cdef class _Grid_NoMap:
@@ -184,7 +188,7 @@ cdef class _Grid_NoMap:
                 continue
             agent_mview[count] = agent
             count += 1
-        
+
         agent_list = [0] * count
         for i in range(count):
             agent_list[i] = agent_mview[i]
@@ -200,7 +204,7 @@ cdef class _Grid_NoMap:
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
         cdef int x, y, count
-        
+
         neighborhood = np.empty(((radius*2+1)**2, 2), int)
         x, y = pos[0], pos[1]
         count = 0
@@ -224,7 +228,7 @@ cdef class _Grid_NoMap:
 
                     if nx == x and ny == y and not include_center:
                         continue
-                    
+
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
@@ -242,12 +246,16 @@ cdef class _Grid_NoMap:
 
                     if nx == x and ny == y and not include_center:
                         continue
-                    
+
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
 
-        neighborhood_list = [0] * count
+        neighborhood_list = [[0, 0]] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+            # We do this instead of
+            # "neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])"
+            # because tuple creation is expensive
+            neighborhood_list[i][0] = neighborhood[i, 0]
+            neighborhood_list[i][1] = neighborhood[i, 1]
         return neighborhood_list
