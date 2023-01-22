@@ -1,6 +1,5 @@
 # cython: infer_types=True, language_level=3
 # cython: nonecheck=False
-# cython: cdivision=True
 # See https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 
 cimport cython
@@ -98,7 +97,9 @@ cdef class _Grid:
 
                     if not moore and abs(dx) + abs(dy) > radius:
                         continue
-
+                    
+                    # we can't use cdivision here because x + dx and y + dy can
+                    # be negative since in C -1 % 5 = -1 while Python yields 4.
                     nx = (x + dx) % self.width
                     ny = (y + dy) % self.height
 
