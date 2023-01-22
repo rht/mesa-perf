@@ -1,5 +1,6 @@
 # cython: infer_types=True, language_level=3
 # cython: nonecheck=False
+# cython: cdivision=True
 
 cimport cython
 import numpy as np
