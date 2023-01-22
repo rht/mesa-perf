@@ -33,7 +33,7 @@ stmt = "grid._neighborhood_cache = {}; grid.get_neighborhood((10, 10), True, inc
 elapsed_neighborhood_default = print_elapsed("python get_neighborhood", setup, stmt)
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("python get_cell_list_contents", setup, stmt)
+elapsed_cl_default = print_elapsed("python get_cell_list_contents", setup, stmt)
 
 setup = """
 import mesa
@@ -62,7 +62,8 @@ elapsed_neighborhood_cython = print_elapsed("cython with map get_neighborhood", 
 print("  speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_cython, 2))
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython with map get_cell_list_contents", setup.format("_Grid"), stmt)
+elapsed_cl_cython = print_elapsed("cython with map get_cell_list_contents", setup.format("_Grid"), stmt)
+print("  speedup", round(elapsed_cl_default / elapsed_cl_cython, 2))
 
 stmt = "_Grid_NoMap(width, height, False)"
 print_elapsed("cython grid __init__", setup.format("_Grid_NoMap"), stmt)
@@ -72,4 +73,5 @@ elapsed_neighborhood_nomap = print_elapsed("cython get_neighborhood", setup.form
 print("  speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_nomap, 2))
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-print_elapsed("cython get_cell_list_contents", setup.format("_Grid_NoMap"), stmt)
+elapsed_cl_nomap = print_elapsed("cython get_cell_list_contents", setup.format("_Grid_NoMap"), stmt)
+print("  speedup", round(elapsed_cl_default / elapsed_cl_nomap, 2))
