@@ -1,4 +1,5 @@
 # cython: infer_types=True, language_level=3
+# cython: nonecheck=False
 
 cimport cython
 import numpy as np
