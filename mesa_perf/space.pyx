@@ -99,7 +99,8 @@ cdef class _Grid:
                         continue
                     
                     # we can't use cdivision here because x + dx and y + dy can
-                    # be negative since in C -1 % 5 = -1 while Python yields 4.
+                    # be negative and C rounds towards 0 i.e. -1 % 5 = -1 while 
+                    # Python rounds towards infinity i.e. -1 % 5 = 4.
                     nx = (x + dx) % self.width
                     ny = (y + dy) % self.height
 
