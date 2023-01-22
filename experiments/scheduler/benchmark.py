@@ -4,10 +4,10 @@ repetition = 1000
 
 
 def print_elapsed(label, setup, stmt):
-    elapsed = "{:.3f} μs".format(
-        timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition
-    )
+    _elapsed = timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition
+    elapsed = "{:.3f} μs".format(_elapsed)
     print(label, elapsed)
+    return _elapsed
 
 
 setup = """
@@ -19,10 +19,10 @@ for i in range(200):
     schedule.add(agent)
 """
 stmt = "schedule.step()"
-print_elapsed(
+e_default = print_elapsed(
     "default", setup.format("mesa", "mesa.time.BaseScheduler", "mesa.Agent", ""), stmt
 )
-print_elapsed(
+e_default_shuffled = print_elapsed(
     "default shuffled",
     setup.format("mesa", "mesa.time.RandomActivation", "mesa.Agent", ""),
     stmt,
@@ -36,7 +36,7 @@ print()
 #     stmt,
 # )
 
-print_elapsed(
+e_cython = print_elapsed(
     "cython python dict",
     "import cython_version\n"
     + setup.format(
@@ -44,7 +44,8 @@ print_elapsed(
     ),
     stmt,
 )
-print_elapsed(
+print(" ", round(e_default / e_cython, 2), "x")
+e_cython_shuffled = print_elapsed(
     "cython python dict, shuffled",
     "import cython_version\n"
     + setup.format(
@@ -52,6 +53,7 @@ print_elapsed(
     ),
     stmt,
 )
+print(" ", round(e_default_shuffled / e_cython_shuffled, 2), "x")
 print_elapsed(
     "cython python dict, cython shuffled",
     "import cython_version\n"
@@ -100,7 +102,7 @@ print_elapsed(
 print()
 
 
-print_elapsed(
+e_cython_fast = print_elapsed(
     "cython map, cython agent",
     "import cython_version\n"
     + setup.format(
@@ -111,7 +113,8 @@ print_elapsed(
     ),
     stmt,
 )
-print_elapsed(
+print(" ", round(e_default / e_cython_fast, 2), "x")
+e_cython_shuffled_fast = print_elapsed(
     "cython map, cython agent shuffled",
     "import cython_version\n"
     + setup.format(
@@ -122,7 +125,7 @@ print_elapsed(
     ),
     stmt,
 )
-print_elapsed(
+e_cython_shuffled_fast = print_elapsed(
     "cython map, cython agent, cython shuffled",
     "import cython_version\n"
     + setup.format(
@@ -133,6 +136,7 @@ print_elapsed(
     ),
     stmt,
 )
+print(" ", round(e_default_shuffled / e_cython_shuffled_fast, 2), "x")
 
 
 
