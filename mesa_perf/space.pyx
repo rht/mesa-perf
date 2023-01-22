@@ -127,13 +127,9 @@ cdef class _Grid:
                     neighborhood[count, 1] = ny
                     count += 1
 
-        neighborhood_list = [[0, 0]] * count
+        neighborhood_list = [0] * count
         for i in range(count):
-            # We do this instead of
-            # "neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])"
-            # because tuple creation is expensive
-            neighborhood_list[i][0] = neighborhood[i, 0]
-            neighborhood_list[i][1] = neighborhood[i, 1]
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
         return neighborhood_list
 
 cdef class _Grid_NoMap:
@@ -254,11 +250,7 @@ cdef class _Grid_NoMap:
                     neighborhood[count, 1] = ny
                     count += 1
 
-        neighborhood_list = [[0, 0]] * count
+        neighborhood_list = [0] * count
         for i in range(count):
-            # We do this instead of
-            # "neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])"
-            # because tuple creation is expensive
-            neighborhood_list[i][0] = neighborhood[i, 0]
-            neighborhood_list[i][1] = neighborhood[i, 1]
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
         return neighborhood_list
