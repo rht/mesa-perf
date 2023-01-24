@@ -45,43 +45,71 @@ cdef class _Grid:
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef list get_cell_list_contents(self, object cell_list):
-        cdef long default_val, x, y
+    cpdef object[:] get_cell_mview_contents(self, long[:, :] tuples_mview):
+        cdef long default_val
         cdef int count
-        cdef long[:] ids_mview
-        cdef list agent_list
-
-        length = len(cell_list)
-        ids_mview = np.ndarray(length, long)
-
+        cdef object[:] agent_mview
+        
+        length = len(tuples_mview)
+        agent_mview = np.ndarray(length, object)
         count = 0
         default_val = self.default_val()
         for i in range(length):
-            pos = cell_list[i]
-            x, y = pos[0], pos[1]
-            id_agent = self._grid[x, y]
+            id_agent = self._grid[tuples_mview[i, 0], tuples_mview[i, 1]]
             if id_agent == default_val:
                 continue
-            ids_mview[count] = id_agent
+            agent_mview[i] = self._agent_map[id_agent]
             count += 1
+        return agent_mview[:count]
+ 
+    @cython.wraparound(False)
+    @cython.boundscheck(False)   
+    cpdef long[:, :] convert_tuples_to_mview(self, object cell_list):
+        cdef long x, y
+        cdef long[:, :] tuples_mview
 
-        agent_list = [0] * count
-        for i in range(count):
-            agent_list[i] = self._agent_map[ids_mview[i]]
+        length = len(cell_list)
+        tuples_mview = np.ndarray((length, 2), long)
+
+        for i in range(length):
+            pos = cell_list[i]
+            x, y = pos[0], pos[1]
+            tuples_mview[i, 0], tuples_mview[i, 1] = x, y
+
+        return tuples_mview
+    
+    @cython.wraparound(False)
+    @cython.boundscheck(False) 
+    cpdef list convert_agent_mview_to_list(self, object[:] agent_mview):
+        
+        length = len(agent_mview)
+        agent_list = [0] * length
+        
+        for i in range(length):
+            agent_list[i] = agent_mview[i]
+        
         return agent_list
+    
+    cpdef get_cell_list_contents(self, object cell_list):
+    
+        tuples_mview = self.convert_tuples_to_mview(cell_list)
+        agent_mview = self.get_cell_mview_contents(tuples_mview)
+        return self.convert_agent_mview_to_list(agent_mview)
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
+
+        cdef long neighborhood_c[(radius*2+1)**2][2]
+        cdef long [:, :] neighborhood = neighborhood_c
+        #cdef long[:, :] neighborhood
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
         cdef int x, y, count
-        cdef long[:, :] neighborhood
-        cdef list neighborhood_list
-
-        neighborhood = np.empty(((radius*2+1)**2, 2), int)
-        x, y = pos
+     
+        #neighborhood = np.empty(((radius*2+1)**2, 2), long)
+        x, y = pos[0], pos[1]
         count = 0
         if self.torus:
 
@@ -97,10 +125,7 @@ cdef class _Grid:
 
                     if not moore and abs(dx) + abs(dy) > radius:
                         continue
-                    
-                    # we can't use cdivision here because x + dx and y + dy can
-                    # be negative and C rounds towards 0 i.e. -1 % 5 = -1 while 
-                    # Python rounds towards infinity i.e. -1 % 5 = 4.
+
                     nx = (x + dx) % self.width
                     ny = (y + dy) % self.height
 
@@ -128,10 +153,18 @@ cdef class _Grid:
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
+        
+        return neighborhood[:count]
+    
+    cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+        
+        cdef list neighborhood_list
+        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
 
+        count = len(neighborhood_mview)
         neighborhood_list = [0] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+            neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
         return neighborhood_list
 
 cdef class _Grid_NoMap:
@@ -170,37 +203,61 @@ cdef class _Grid_NoMap:
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef list get_cell_list_contents(self, object cell_list):
-        cdef long x, y
+    cpdef object[:] get_cell_mview_contents(self, long[:, :] tuples_mview):
         cdef int count
-        cdef long[:] ids_mview
-        cdef list agent_list
-
-        length = len(cell_list)
+        cdef object[:] agent_mview
+        
+        length = len(tuples_mview)
         agent_mview = np.ndarray(length, object)
-
         count = 0
         default_val = self.default_val()
         for i in range(length):
-            pos = cell_list[i]
-            x, y = pos[0], pos[1]
-            agent = self._grid[x, y]
+            agent = self._grid[tuples_mview[i, 0], tuples_mview[i, 1]]
             if agent == default_val:
                 continue
-            agent_mview[count] = agent
+            agent_mview[i] = agent
             count += 1
+        return agent_mview[:count]
+ 
+    @cython.wraparound(False)
+    @cython.boundscheck(False)   
+    cpdef long[:, :] convert_tuples_to_mview(self, object cell_list):
+        cdef long x, y
+        cdef long[:, :] tuples_mview
 
-        agent_list = [0] * count
-        for i in range(count):
+        length = len(cell_list)
+        tuples_mview = np.ndarray((length, 2), long)
+
+        for i in range(length):
+            pos = cell_list[i]
+            x, y = pos[0], pos[1]
+            tuples_mview[i, 0], tuples_mview[i, 1] = x, y
+
+        return tuples_mview
+    
+    @cython.wraparound(False)
+    @cython.boundscheck(False) 
+    cpdef list convert_agent_mview_to_list(self, object[:] agent_mview):
+        
+        length = len(agent_mview)
+        agent_list = [0] * length
+        
+        for i in range(length):
             agent_list[i] = agent_mview[i]
+        
         return agent_list
+    
+    cpdef get_cell_list_contents(self, object cell_list):
+    
+        tuples_mview = self.convert_tuples_to_mview(cell_list)
+        agent_mview = self.get_cell_mview_contents(tuples_mview)
+        return self.convert_agent_mview_to_list(agent_mview)
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
 
         cdef long[:, :] neighborhood
-        cdef list neighborhood_list
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
@@ -251,8 +308,17 @@ cdef class _Grid_NoMap:
                     neighborhood[count, 0] = nx
                     neighborhood[count, 1] = ny
                     count += 1
-
+        
+        return neighborhood[:count]
+    
+    cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+    
+        cdef list neighborhood_list
+        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
+        
+        count = len(neighborhood_mview)
         neighborhood_list = [0] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+            neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
         return neighborhood_list
+        
