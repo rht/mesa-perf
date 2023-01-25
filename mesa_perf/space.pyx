@@ -4,7 +4,8 @@
 
 cimport cython
 import numpy as np
-
+from cython cimport view
+from libc.stdlib cimport malloc
 
 cdef class _Grid:
     cdef long height, width, num_cells
@@ -165,6 +166,16 @@ cdef class _Grid:
             neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
         return neighborhood_list
     
+    cpdef object[:] get_neighbors_mview(self, object pos, bint moore, int radius, bint include_center):
+        
+        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
+        return self.get_cell_mview_contents(neighborhood_mview)
+    
+    cpdef list get_neighbors(self, object pos, bint moore, int radius, bint include_center):
+    
+        neighbors_mview = self.get_neighbors_mview(pos, moore, radius, include_center)
+        return self.convert_agent_mview_to_list(neighbors_mview)
+    
 
 cdef class _Grid_NoMap:
     cdef long height, width, num_cells
@@ -262,7 +273,7 @@ cdef class _Grid_NoMap:
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
         cdef int x, y, count
 
-        neighborhood = np.empty(((radius*2+1)**2, 2), int)
+        neighborhood = np.empty(((radius*2+1)**2, 2), long)
         x, y = pos[0], pos[1]
         count = 0
         if self.torus:
@@ -320,5 +331,15 @@ cdef class _Grid_NoMap:
         for i in range(count):
             neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
         return neighborhood_list
+        
+    cpdef object[:] get_neighbors_mview(self, object pos, bint moore, int radius, bint include_center):
+        
+        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
+        return self.get_cell_mview_contents(neighborhood_mview)
+    
+    cpdef list get_neighbors(self, object pos, bint moore, int radius, bint include_center):
+    
+        neighbors_mview = self.get_neighbors_mview(pos, moore, radius, include_center)
+        return self.convert_agent_mview_to_list(neighbors_mview)
         
         
