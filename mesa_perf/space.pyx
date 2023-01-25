@@ -181,7 +181,6 @@ cdef class _Grid_NoMap:
     cdef long height, width, num_cells
     cdef bint torus
     cdef object[:, :] _grid
-    cdef dict _agent_map
 
     def __init__(self, long width, long height, bint torus):
         self.height = height
@@ -205,7 +204,6 @@ cdef class _Grid_NoMap:
 
         if self.is_cell_empty(pos):
             x, y = pos[0], pos[1]
-            agent_id = agent.unique_id
             self._grid[x, y] = agent
             agent.pos = pos
         else:
@@ -341,5 +339,3 @@ cdef class _Grid_NoMap:
     
         neighbors_mview = self.get_neighbors_mview(pos, moore, radius, include_center)
         return self.convert_agent_mview_to_list(neighbors_mview)
-        
-        
