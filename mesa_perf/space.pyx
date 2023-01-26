@@ -30,7 +30,10 @@ cdef class _Grid:
 
     cpdef long _default_val_ids(self):
         return -1
-
+    
+    cpdef default_val(self):
+        return None
+    
     cpdef is_cell_empty(self, pos):
         cdef long x, y
 
