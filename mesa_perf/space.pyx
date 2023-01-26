@@ -7,10 +7,9 @@ import numpy as np
 from cython cimport view
 
 cdef class _Grid:
-    cdef long height, width, num_cells
+    cdef long height, width, num_cells, num_empties
     cdef bint torus
-    cdef long[:, :] _grid
-    cdef object[:, :] _agent_grid
+    cdef object[:, :, :] _grid
     cdef dict _neighborhood_cache_cy
     cdef dict _neighborhood_cache_py
 
@@ -19,6 +18,7 @@ cdef class _Grid:
         self.width = width
         self.torus = torus
         self.num_cells = height * width
+        self.num_empties = self.num_cells
 
         self._grid = np.full((self.width, self.height), self.default_val(), dtype=long)
         
@@ -43,11 +43,22 @@ cdef class _Grid:
         if self.is_cell_empty(pos):
             x, y = pos[0], pos[1]
             agent_id = agent.unique_id
-            self._grid[x, y] = agent_id
-            self._agent_grid[x, y] = agent
+            self._grid[x, y, 0] = agent_id
+            self._grid[x, y, 1] = agent
             agent.pos = pos
+            self.num_empties -= 1
         else:
             raise Exception("Cell not empty")
+            
+    cpdef remove_agent(self, agent):
+        cdef long x, y, agent_id
+        if (pos := agent.pos) is None:
+            return
+        x, y = pos
+        self._ids_grid[x][y] = self.default_val()
+        self._agents_grid[x][y] = None
+        self.num_empties += 1
+        agent.pos = None
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
