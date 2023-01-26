@@ -5,13 +5,14 @@
 cimport cython
 import numpy as np
 from cython cimport view
-from libc.stdlib cimport malloc
 
 cdef class _Grid:
     cdef long height, width, num_cells
     cdef bint torus
     cdef long[:, :] _grid
-    cdef dict _agent_map
+    cdef object[:, :] _agent_grid
+    cdef dict _neighborhood_cache_cy
+    cdef dict _neighborhood_cache_py
 
     def __init__(self, long width, long height, bint torus):
         self.height = height
@@ -20,8 +21,12 @@ cdef class _Grid:
         self.num_cells = height * width
 
         self._grid = np.full((self.width, self.height), self.default_val(), dtype=long)
-
-        self._agent_map = {}
+        
+        self._agent_grid = np.full((self.width, self.height), None, dtype=object)
+        
+        # Neighborhood caches
+        self._neighborhood_cache_py = {}
+        self._neighborhood_cache_cy = {}
 
     cpdef long default_val(self):
         return -1
@@ -39,7 +44,7 @@ cdef class _Grid:
             x, y = pos[0], pos[1]
             agent_id = agent.unique_id
             self._grid[x, y] = agent_id
-            self._agent_map[agent_id] = agent
+            self._agent_grid[x, y] = agent
             agent.pos = pos
         else:
             raise Exception("Cell not empty")
@@ -50,16 +55,18 @@ cdef class _Grid:
         cdef long default_val
         cdef int count
         cdef object[:] agent_mview
-        
+        cdef long x, y
+
         length = len(tuples_mview)
         agent_mview = np.ndarray(length, object)
         count = 0
         default_val = self.default_val()
         for i in range(length):
-            id_agent = self._grid[tuples_mview[i, 0], tuples_mview[i, 1]]
+            x, y = tuples_mview[i, 0], tuples_mview[i, 1]
+            id_agent = self._grid[x, y]
             if id_agent == default_val:
                 continue
-            agent_mview[i] = self._agent_map[id_agent]
+            agent_mview[i] = self._agent_grid[x, y]
             count += 1
         return agent_mview[:count]
  
@@ -99,8 +106,8 @@ cdef class _Grid:
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
-
+    cpdef long[:, :] compute_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+        
         cdef long[:, :] neighborhood
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
@@ -155,16 +162,41 @@ cdef class _Grid:
         
         return neighborhood[:count]
         
+    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
+    
+        cache_key = (pos, moore, include_center, radius)
+        cached_neighborhood = self._neighborhood_cache_cy.get(cache_key, None)
+        
+        if cached_neighborhood is not None:
+            return cached_neighborhood
+        
+        neighborhood = self.compute_neighborhood(pos, moore, radius, include_center)
+        
+        self._neighborhood_cache_cy[cache_key] = neighborhood
+
+        return neighborhood
+        
     cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
     
-        cdef list neighborhood_list
-        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
+        cache_key = (pos, moore, include_center, radius)
+        cached_neighborhood = self._neighborhood_cache_py.get(cache_key, None)
         
-        count = len(neighborhood_mview)
+        if cached_neighborhood is not None:
+            return cached_neighborhood
+        
+        cdef list neighborhood_list
+        
+        neighborhood = self.compute_neighborhood(pos, moore, radius, include_center)
+        
+        count = len(neighborhood)
         neighborhood_list = [0] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+        
+        self._neighborhood_cache_py[cache_key] = neighborhood_list
+
         return neighborhood_list
+    
     
     cpdef object[:] get_neighbors_mview(self, object pos, bint moore, int radius, bint include_center):
         
@@ -181,6 +213,8 @@ cdef class _Grid_NoMap:
     cdef long height, width, num_cells
     cdef bint torus
     cdef object[:, :] _grid
+    cdef dict _neighborhood_cache_cy
+    cdef dict _neighborhood_cache_py
 
     def __init__(self, long width, long height, bint torus):
         self.height = height
@@ -189,6 +223,11 @@ cdef class _Grid_NoMap:
         self.num_cells = height * width
 
         self._grid = np.full((self.width, self.height), self.default_val(), dtype=object)
+        
+        # Neighborhood caches
+        self._neighborhood_cache_py = {}
+        self._neighborhood_cache_cy = {}
+
 
     cpdef default_val(self):
         return None
@@ -263,8 +302,8 @@ cdef class _Grid_NoMap:
 
     @cython.wraparound(False)
     @cython.boundscheck(False)
-    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
-
+    cpdef long[:, :] compute_neighborhood(self, object pos, bint moore, int radius, bint include_center):
+        
         cdef long[:, :] neighborhood
         cdef long nx, ny
         cdef int x_radius, y_radius, dx, dy, kx, ky
@@ -318,16 +357,40 @@ cdef class _Grid_NoMap:
                     count += 1
         
         return neighborhood[:count]
+        
+    cpdef long[:, :] get_neighborhood_mview(self, object pos, bint moore, int radius, bint include_center):
     
+        cache_key = (pos, moore, include_center, radius)
+        cached_neighborhood = self._neighborhood_cache_cy.get(cache_key, None)
+        
+        if cached_neighborhood is not None:
+            return cached_neighborhood
+        
+        neighborhood = self.compute_neighborhood(pos, moore, radius, include_center)
+        
+        self._neighborhood_cache_cy[cache_key] = neighborhood
+
+        return neighborhood
+        
     cpdef list get_neighborhood(self, object pos, bint moore, int radius, bint include_center):
     
-        cdef list neighborhood_list
-        neighborhood_mview = self.get_neighborhood_mview(pos, moore, radius, include_center)
+        cache_key = (pos, moore, include_center, radius)
+        cached_neighborhood = self._neighborhood_cache_py.get(cache_key, None)
         
-        count = len(neighborhood_mview)
+        if cached_neighborhood is not None:
+            return cached_neighborhood
+        
+        cdef list neighborhood_list
+        
+        neighborhood = self.compute_neighborhood(pos, moore, radius, include_center)
+        
+        count = len(neighborhood)
         neighborhood_list = [0] * count
         for i in range(count):
-            neighborhood_list[i] = (neighborhood_mview[i, 0], neighborhood_mview[i, 1])
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+        
+        self._neighborhood_cache_py[cache_key] = neighborhood_list
+
         return neighborhood_list
         
     cpdef object[:] get_neighbors_mview(self, object pos, bint moore, int radius, bint include_center):
