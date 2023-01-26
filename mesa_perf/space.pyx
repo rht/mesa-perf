@@ -20,22 +20,21 @@ cdef class _Grid:
         self.num_cells = height * width
         self.num_empties = self.num_cells
 
-        self._grid = np.full((self.width, self.height), self.default_val(), dtype=long)
-        
-        self._agent_grid = np.full((self.width, self.height), None, dtype=object)
+        self._ids_grid = np.full((self.width, self.height), self._default_val_ids(), dtype=long)
+        self._agents_grid = np.full((self.width, self.height), self.default_val(), dtype=object)
         
         # Neighborhood caches
         self._neighborhood_cache_py = {}
         self._neighborhood_cache_cy = {}
 
-    cpdef long default_val(self):
+    cpdef long _default_val_ids(self):
         return -1
 
     cpdef is_cell_empty(self, pos):
         cdef long x, y
 
         x, y = pos[0], pos[1]
-        return self._grid[x, y] == self.default_val()
+        return self._ids_grid[x, y] == self._default_val_ids()
 
     cpdef place_agent(self, agent, pos):
         cdef long x, y, agent_id
@@ -43,8 +42,8 @@ cdef class _Grid:
         if self.is_cell_empty(pos):
             x, y = pos[0], pos[1]
             agent_id = agent.unique_id
-            self._grid[x, y, 0] = agent_id
-            self._grid[x, y, 1] = agent
+            self._ids_grid[x, y] = agent_id
+            self._agents_grid[x, y] = agent
             agent.pos = pos
             self.num_empties -= 1
         else:
@@ -55,8 +54,8 @@ cdef class _Grid:
         if (pos := agent.pos) is None:
             return
         x, y = pos
-        self._ids_grid[x][y] = self.default_val()
-        self._agents_grid[x][y] = None
+        self._ids_grid[x][y] = self._default_val_ids()
+        self._agents_grid[x][y] = self.default_val()
         self.num_empties += 1
         agent.pos = None
 
@@ -71,13 +70,13 @@ cdef class _Grid:
         length = len(tuples_mview)
         agent_mview = np.ndarray(length, object)
         count = 0
-        default_val = self.default_val()
+        default_val = self._default_val_ids()
         for i in range(length):
             x, y = tuples_mview[i, 0], tuples_mview[i, 1]
-            id_agent = self._grid[x, y]
+            id_agent = self._ids_grid[x, y]
             if id_agent == default_val:
                 continue
-            agent_mview[i] = self._agent_grid[x, y]
+            agent_mview[i] = self._agents_grid[x, y]
             count += 1
         return agent_mview[:count]
  
@@ -207,7 +206,6 @@ cdef class _Grid:
         self._neighborhood_cache_py[cache_key] = neighborhood_list
 
         return neighborhood_list
-    
     
     cpdef object[:] get_neighbors_mview(self, object pos, bint moore, int radius, bint include_center):
         
