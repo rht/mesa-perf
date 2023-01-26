@@ -1,8 +1,8 @@
 import timeit
 
-repetition = 200
-radius = 1
-density = 0
+repetition = 1000
+radius = 10
+density = 1
 
 def print_elapsed(label, setup, stmt):
     _elapsed = timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition
@@ -35,7 +35,7 @@ stmt = "mesa.space.SingleGrid(width, height, False)"
 elapsed_init_default = print_elapsed("python grid __init__", setup, stmt)
 print()
 
-stmt = "grid._neighborhood_cache = dict(); grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
+stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
 elapsed_neighborhood_default = print_elapsed("python get_neighborhood", setup, stmt)
 print()
 
@@ -43,7 +43,7 @@ stmt = "grid.get_cell_list_contents(cell_list)"
 elapsed_cl_default = print_elapsed("python get_cell_list_contents", setup, stmt)
 print()
 
-stmt = "grid._neighborhood_cache = dict(); grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
+stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
 elapsed_neighbors_default = print_elapsed("python get_neighbors", setup, stmt)
 print()
 
@@ -70,6 +70,7 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid", density, radius)
 
+input()
 
 print("\ntimings with the map\n")
 
@@ -100,6 +101,8 @@ print(" --> speedup", round(elapsed_cl_default / elapsed_cl_nomap, 2))
 stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
 elapsed_neighbors_nomap = print_elapsed("cython with map get_neighbors", setup.format("_Grid"), stmt)
 print(" --> speedup", round(elapsed_neighbors_default / elapsed_neighbors_nomap, 2))
+
+input()
 
 setup = """
 import mesa
