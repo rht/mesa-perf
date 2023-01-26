@@ -9,7 +9,8 @@ from cython cimport view
 cdef class _Grid:
     cdef long height, width, num_cells, num_empties
     cdef bint torus
-    cdef object[:, :, :] _grid
+    cdef long[:, :] _ids_grid
+    cdef object[:, :] _agents_grid
     cdef dict _neighborhood_cache_cy
     cdef dict _neighborhood_cache_py
 
