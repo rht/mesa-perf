@@ -4,10 +4,8 @@ repetition = 1000
 radius = 10
 density = 0.5
 
-def print_elapsed(label, setup, stmt):
+def elapsed(setup, stmt):
     _elapsed = timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition
-    elapsed = "{:.3f} μs".format(_elapsed)
-    print(label, elapsed, end="")
     return _elapsed
 
 setup = """
@@ -29,24 +27,25 @@ for i in range(round(density*width*height)):
 cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={1})
 """.format(density, radius)
 
-print("\ndefault\n")
+print("\nTimings Default\n")
 
-stmt = "mesa.space.SingleGrid(width, height, False)"
-elapsed_init_default = print_elapsed("python grid __init__", setup, stmt)
-print()
 
-stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighborhood_default = print_elapsed("python get_neighborhood", setup, stmt)
-print()
+methods = ["__init__(width, height, False)", "get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius), 
+           "get_cell_list_contents(cell_list)", "get_neighbors((10, 10), True, include_center=True, radius={})".format(radius), 
+           "get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius), 
+           "get_cell_list_contents(cell_list)", "get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)]
 
-stmt = "grid.get_cell_list_contents(cell_list)"
-elapsed_cl_default = print_elapsed("python get_cell_list_contents", setup, stmt)
-print()
-
-stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighbors_default = print_elapsed("python get_neighbors", setup, stmt)
-print()
-
+elapsed_methods_default = []
+for method_with_params in methods:
+    stmt = "grid.{}".format(method_with_params)
+    method = method_with_params.split("(")[0]
+    time_method = elapsed(setup, stmt)
+    elapsed_methods_default.append((method, time_method))
+    
+n = 4
+for x, y in list(elapsed_methods_default)[:n]: 
+    str_elapsed = "{:.2f} μs".format(y)
+    print("Grid Default", x, str_elapsed)
 
 setup = """
 import mesa
@@ -70,44 +69,30 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid", density, radius)
 
-descr = "cython agents+ids "
+descr = "Cython Agents+Ids "
+print("\nTimings", descr, "\n")
 
-print("\ntimings with the map\n")
+methods = ["__init__(width, height, False)", "get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius), 
+           "get_cell_list_contents(cell_list)", "get_neighbors((10, 10), True, include_center=True, radius={})".format(radius),
+           "get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius),
+           "get_cell_mview_contents(cell_view)", "get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)]
 
-stmt = "_Grid(width, height, False)"
-method = "__init__"
-elapsed_init_cython = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_init_default / elapsed_init_cython, 2))
+elapsed_methods_grid_double = []
 
-stmt = "grid.get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighborhood_mview"
-elapsed_neighborhood_mview_nomap = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_mview_nomap, 2))
+for method_with_params in methods:
+    stmt = "grid.{}".format(method_with_params)
+    method = method_with_params.split("(")[0]
+    time_method = elapsed(setup, stmt)
+    elapsed_methods_grid_double.append((method, time_method))
+    
 
-stmt = "grid.get_cell_mview_contents(cell_view)"
-method = "get_cell_mview_contents"
-elapsed_cl_mview_nomap = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_nomap, 2))
+for (x, y), (z, h) in zip(elapsed_methods_default, elapsed_methods_grid_double): 
 
-stmt = "grid.get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighbors_mview"
-elapsed_neighbors_mview_nomap = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighbors_default / elapsed_neighbors_mview_nomap, 2))
+    str_elapsed = "{:.2f} μs".format(h)
+    speed_up = "{:.2f}".format(y/h)
 
-stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighborhood"
-elapsed_neighborhood_nomap = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_nomap, 2))
+    print("Grid Agents+Ids", z, str_elapsed, " --> speedup", speed_up)
 
-stmt = "grid.get_cell_list_contents(cell_list)"
-method = "get_cell_list_contents"
-elapsed_cl_nomap = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_nomap, 2))
-
-stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighbors"
-elapsed_neighbors_nomap = print_elapsed("cython with map get_neighbors", setup.format("_Grid"), stmt)
-print(" --> speedup", round(elapsed_neighbors_default / elapsed_neighbors_nomap, 2))
 
 setup = """
 import mesa
@@ -131,40 +116,25 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid_NoMap", density, radius)
 
-descr = "cython only agents "
-print("\ntimings" + descr+ "\n")
+descr = "Cython Only Agents "
+print("\nTimings", descr, "\n")
 
-stmt = "_Grid_NoMap(width, height, False)"
-method = "__init__"
-elapsed_init_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_init_default / elapsed_init_map, 2))
+methods = ["__init__(width, height, False)", "get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius), 
+           "get_cell_list_contents(cell_list)", "get_neighbors((10, 10), True, include_center=True, radius={})".format(radius),
+           "get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius),
+           "get_cell_mview_contents(cell_view)", "get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)]
 
-stmt = "grid.get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighborhood_mview"
-elapsed_neighborhood_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_mview_map, 2))
+elapsed_methods_grid_single = []
 
-stmt = "grid.get_cell_mview_contents(cell_view)"
-method = "get_cell_mview_contents"
-elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
+for method_with_params in methods:
+    stmt = "grid.{}".format(method_with_params)
+    method = method_with_params.split("(")[0]
+    time_method = elapsed(setup, stmt)
+    elapsed_methods_grid_single.append((method, time_method))
 
-stmt = "grid.get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighbors_mview"
-elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
+for (x, y), (z, h) in zip(elapsed_methods_default, elapsed_methods_grid_single): 
 
-stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighborhood"
-elapsed_neighborhood_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_map, 2))
+    str_elapsed = "{:.2f} μs".format(h)
+    speed_up = "{:.2f}".format(y/h)
 
-stmt = "grid.get_cell_list_contents(cell_list)"
-method = "get_cell_list_contents"
-elapsed_cl_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_map, 2))
-
-stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighbors"
-elapsed_cl_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_map, 2))
+    print("Grid Agents", z, str_elapsed, " --> speedup", speed_up)
