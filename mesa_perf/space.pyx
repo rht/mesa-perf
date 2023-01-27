@@ -1,3 +1,4 @@
+# distutils: language = c++
 # cython: infer_types=True, language_level=3
 # cython: nonecheck=False
 # See https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
@@ -5,15 +6,10 @@
 cimport cython
 import numpy as np
 from cython cimport view
+import random
+
 
 cdef class _Grid:
-    cdef long height, width, num_cells, num_empties
-    cdef bint torus
-    cdef long[:, :] _ids_grid
-    cdef object[:, :] _agents_grid
-    cdef dict _neighborhood_cache_cy
-    cdef dict _neighborhood_cache_py
-
     def __init__(self, long width, long height, bint torus):
         self.height = height
         self.width = width
@@ -35,7 +31,7 @@ cdef class _Grid:
         return None
     
     # TODO: we need fused types for pos arg for fast execution
-    cpdef is_cell_empty(self, pos):
+    cpdef bint is_cell_empty(self, pos):
         cdef long x, y
 
         x, y = pos[0], pos[1]
@@ -221,7 +217,15 @@ cdef class _Grid:
     
         neighbors_mview = self.get_neighbors_mview(pos, moore, radius, include_center)
         return self.convert_agent_mview_to_list(neighbors_mview)
-    
+
+    cpdef move_to_empty(self, agent):
+        while True:
+            new_pos = (random.randrange(self.width), random.randrange(self.height))
+            if self.is_cell_empty(new_pos):
+                break
+        self.remove_agent(agent)
+        self.place_agent(agent, new_pos)
+
 
 cdef class _Grid_NoMap:
     cdef long height, width, num_cells
