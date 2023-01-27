@@ -34,6 +34,7 @@ cdef class _Grid:
     cpdef default_val(self):
         return None
     
+    # TODO: we need fused types for pos arg for fast execution
     cpdef is_cell_empty(self, pos):
         cdef long x, y
 
