@@ -77,7 +77,7 @@ cdef class _Grid:
             id_agent = self._ids_grid[x, y]
             if id_agent == default_val:
                 continue
-            agent_mview[i] = self._agents_grid[x, y]
+            agent_mview[count] = self._agents_grid[x, y]
             count += 1
         return agent_mview[:count]
  
