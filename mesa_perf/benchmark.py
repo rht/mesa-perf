@@ -70,34 +70,42 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid", density, radius)
 
+descr = "cython agents+ids "
 
 print("\ntimings with the map\n")
 
 stmt = "_Grid(width, height, False)"
-elapsed_init_cython = print_elapsed("cython with map grid __init__", setup, stmt)
+method = "__init__"
+elapsed_init_cython = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_init_default / elapsed_init_cython, 2))
 
 stmt = "grid.get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighborhood_mview_nomap = print_elapsed("cython with map get_neighborhood_mview", setup, stmt)
+method = "get_neighborhood_mview"
+elapsed_neighborhood_mview_nomap = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_mview_nomap, 2))
 
 stmt = "grid.get_cell_mview_contents(cell_view)"
-elapsed_cl_mview_nomap = print_elapsed("cython with map get_cell_mview_contents", setup, stmt)
+method = "get_cell_mview_contents"
+elapsed_cl_mview_nomap = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_nomap, 2))
 
 stmt = "grid.get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighbors_mview_nomap = print_elapsed("cython with map get_neighbors_mview", setup, stmt)
+method = "get_neighbors_mview"
+elapsed_neighbors_mview_nomap = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_neighbors_default / elapsed_neighbors_mview_nomap, 2))
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighborhood_nomap = print_elapsed("cython with map get_neighborhood", setup, stmt)
+method = "get_neighborhood"
+elapsed_neighborhood_nomap = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_nomap, 2))
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-elapsed_cl_nomap = print_elapsed("cython with map get_cell_list_contents", setup, stmt)
+method = "get_cell_list_contents"
+elapsed_cl_nomap = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_nomap, 2))
 
 stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
+method = "get_neighbors"
 elapsed_neighbors_nomap = print_elapsed("cython with map get_neighbors", setup.format("_Grid"), stmt)
 print(" --> speedup", round(elapsed_neighbors_default / elapsed_neighbors_nomap, 2))
 
@@ -123,32 +131,40 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid_NoMap", density, radius)
 
-print("\ntimings without the map\n")
+descr = "cython only agents "
+print("\ntimings" + descr+ "\n")
 
 stmt = "_Grid_NoMap(width, height, False)"
-elapsed_init_map = print_elapsed("cython no map grid __init__", setup, stmt)
+method = "__init__"
+elapsed_init_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_init_default / elapsed_init_map, 2))
 
 stmt = "grid.get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighborhood_mview_map = print_elapsed("cython no map get_neighborhood_mview", setup, stmt)
+method = "get_neighborhood_mview"
+elapsed_neighborhood_mview_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_mview_map, 2))
 
 stmt = "grid.get_cell_mview_contents(cell_view)"
-elapsed_cl_mview_map = print_elapsed("cython no map get_cell_mview_contents", setup, stmt)
+method = "get_cell_mview_contents"
+elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
 
 stmt = "grid.get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_cl_mview_map = print_elapsed("cython no map get_neighbors_mview", setup, stmt)
+method = "get_neighbors_mview"
+elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_neighborhood_map = print_elapsed("cython no map get_neighborhood", setup, stmt)
+method = "get_neighborhood"
+elapsed_neighborhood_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_map, 2))
 
 stmt = "grid.get_cell_list_contents(cell_list)"
-elapsed_cl_map = print_elapsed("cython no map get_cell_list_contents", setup, stmt)
+method = "get_cell_list_contents"
+elapsed_cl_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_map, 2))
 
 stmt = "grid.get_neighbors((10, 10), True, include_center=True, radius={})".format(radius)
-elapsed_cl_map = print_elapsed("cython no map get_neighbors", setup, stmt)
+method = "get_neighbors"
+elapsed_cl_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_cl_default / elapsed_cl_map, 2))
