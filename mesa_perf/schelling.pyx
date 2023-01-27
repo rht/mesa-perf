@@ -29,7 +29,7 @@ cdef class SchellingAgent(cython_time.Agent):
     cpdef step(self):
         cdef int similar = 0
         # for neighbor in self.model.grid.iter_neighbors(self.pos, True):
-        neighbors = self.model.grid.get_neighbors_mview(self.pos, True, 1, False)
+        cdef object[:] neighbors = self.model.grid.get_neighbors_mview(self.pos, True, 1, False)
         cdef int i
         for i in range(len(neighbors)):
             neighbor = neighbors[i]
