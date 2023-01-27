@@ -1,4 +1,5 @@
 # distutils: language = c++
+# cython: profile=True
 import mesa
 cimport cython_time
 cimport space
@@ -26,15 +27,11 @@ cdef class SchellingAgent(cython_time.Agent):
 
     cpdef step(self):
         cdef int similar = 0
-        cdef SchellingAgent neighbor
         # for neighbor in self.model.grid.iter_neighbors(self.pos, True):
-        cdef long[:, :] neighborhood = self.model.grid.get_neighborhood_mview(self.pos, True, 1, False)
-        cdef long x, y
+        neighbors = self.model.grid.get_neighbors_mview(self.pos, True, 1, False)
         cdef int i
-        for i in range(len(neighborhood)):
-            x = neighborhood[i, 0]
-            y = neighborhood[i, 1]
-            neighbor = <SchellingAgent>self.model.grid._agents_grid[x, y]
+        for i in range(len(neighbors)):
+            neighbor = neighbors[i]
             if neighbor.type == self.type:
                 similar += 1
 
@@ -101,6 +98,7 @@ cdef class Schelling:
 
         if self.happy == self.schedule.get_agent_count():
             self.running = False
+
 
 import time
 tic = time.time()
