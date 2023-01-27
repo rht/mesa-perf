@@ -1,5 +1,6 @@
 # distutils: language = c++
-# cython: profile=True
+# cython: infer_types=True, language_level=3
+# cython: nonecheck=False
 import mesa
 cimport cython_time
 cimport space
