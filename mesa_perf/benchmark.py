@@ -70,9 +70,9 @@ cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2
 cell_view = grid.convert_tuples_to_mview(cell_list)
 """.format("_Grid", density, radius)
 
-descr = "cython agents+ids "
+descr = "cython memviews "
 
-print("\ntimings with the map\n")
+print("\ntimings with memviews\n")
 
 stmt = "_Grid(width, height, False)"
 method = "__init__"
@@ -129,30 +129,15 @@ for i in range(round(density*width*height)):
 cell_list = grid.get_neighborhood((10, 10), True, include_center=True, radius={2})
 #print(cell_list)
 cell_view = grid.convert_tuples_to_mview(cell_list)
-""".format("_Grid_NoMap", density, radius)
+""".format("_Grid_only_list", density, radius)
 
-descr = "cython only agents "
+descr = "cython only list "
 print("\ntimings" + descr+ "\n")
 
-stmt = "_Grid_NoMap(width, height, False)"
+stmt = "_Grid_only_list(width, height, False)"
 method = "__init__"
 elapsed_init_map = print_elapsed(descr +  method, setup, stmt)
 print(" --> speedup", round(elapsed_init_default / elapsed_init_map, 2))
-
-stmt = "grid.get_neighborhood_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighborhood_mview"
-elapsed_neighborhood_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_neighborhood_default / elapsed_neighborhood_mview_map, 2))
-
-stmt = "grid.get_cell_mview_contents(cell_view)"
-method = "get_cell_mview_contents"
-elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
-
-stmt = "grid.get_neighbors_mview((10, 10), True, include_center=True, radius={})".format(radius)
-method = "get_neighbors_mview"
-elapsed_cl_mview_map = print_elapsed(descr +  method, setup, stmt)
-print(" --> speedup", round(elapsed_cl_default / elapsed_cl_mview_map, 2))
 
 stmt = "grid.get_neighborhood((10, 10), True, include_center=True, radius={})".format(radius)
 method = "get_neighborhood"
