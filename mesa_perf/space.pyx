@@ -1,6 +1,7 @@
 # distutils: language = c++
 # cython: infer_types=True, language_level=3
 # cython: nonecheck=False
+# cython: initializedcheck=False
 # See https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
 
 cimport cython
