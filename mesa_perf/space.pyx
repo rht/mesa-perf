@@ -6,8 +6,9 @@
 
 cimport cython
 import numpy as np
-from cython cimport view
+import itertools
 import random
+from warnings import warn
 
 
 cdef class _Grid:
@@ -227,17 +228,6 @@ cdef class _Grid:
         self.remove_agent(agent)
         self.place_agent(agent, new_pos)
 
-# distutils: language = c++
-# cython: infer_types=True, language_level=3
-# cython: nonecheck=False
-# cython: initializedcheck=False
-# See https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html#compiler-directives
-
-cimport cython
-import numpy as np
-import itertools
-from warnings import warn
-
 def accept_tuple_argument(wrapped_function):
 
     def wrapper(grid_instance, positions):
@@ -260,6 +250,7 @@ cdef class _BaseGrid:
     cdef list _grid
     cdef dict _neighborhood_cache
     cdef bint _empties_built 
+    cdef set _empties
     
     def __init__(self, long width, long height, bint torus):
         self.height = height
@@ -429,7 +420,7 @@ cdef class _BaseGrid:
 
     cpdef list get_cell_list_contents(self, cell_list):
         cdef list agents
-        cdef long x, y, count
+        cdef long count, x, y
         
         length = len(cell_list)
         agents = [None] * length
@@ -520,8 +511,10 @@ cdef class _BaseGrid:
 cdef class _BaseSingleGrid(_BaseGrid):
 
     cpdef place_agent(self, agent, pos):
+        cdef long x, y
         if self.is_cell_empty(pos):
             x, y = pos
+            self._occupancy_matrix[x, y] = 1
             self._grid[x][y] = agent
             if self._empties_built:
                 self._empties.discard(pos)
@@ -530,10 +523,12 @@ cdef class _BaseSingleGrid(_BaseGrid):
             raise Exception("Cell not empty")
 
     cpdef remove_agent(self, agent):
+        cdef long x, y
         pos = agent.pos
         if pos is None:
             return
         x, y = pos
+        self._occupancy_matrix[x, y] = 0
         self._grid[x][y] = self.default_val()
         if self._empties_built:
             self._empties.add(pos)
@@ -560,7 +555,7 @@ cdef class _BaseMultiGrid(_BaseGrid):
         if self._empties_built and self.is_cell_empty(pos):
             self._empties.add(pos)
         agent.pos = None
-
+    
     cpdef list get_cell_list_contents(self, cell_list):
         
         cdef list agents
@@ -579,8 +574,8 @@ cdef class _BaseMultiGrid(_BaseGrid):
                 
         return agents
     
-    # this method breaks compilation, seems a bug in Cython, probably we should report it
-    # but it's not important for us since we want to port all iterators in Python space
+        
+    # this method fails - seems a bug in Cython
     #def iter_cell_list_contents(self, cell_list):
     #    return itertools.chain.from_iterable(
     #        self._grid[x][y]
