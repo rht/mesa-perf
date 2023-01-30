@@ -228,17 +228,6 @@ cdef class _Grid:
         self.remove_agent(agent)
         self.place_agent(agent, new_pos)
 
-def accept_tuple_argument(wrapped_function):
-
-    def wrapper(grid_instance, positions):
-        if isinstance(positions, tuple) and len(positions) == 2:
-            return wrapped_function(grid_instance, [positions])
-        else:
-            return wrapped_function(grid_instance, positions)
-
-    return wrapper
-
-
 def is_integer(x):
     return isinstance(x, (int, np.integer))
     
@@ -246,8 +235,8 @@ cdef class _BaseGrid:
 
     cdef readonly long height, width, num_cells, num_empties
     cdef readonly bint torus
+    cdef readonly list _grid
     cdef long[:, :] _occupancy_matrix
-    cdef list _grid
     cdef dict _neighborhood_cache
     cdef bint _empties_built 
     cdef set _empties
@@ -397,7 +386,7 @@ cdef class _BaseGrid:
         neighbors = self.get_neighborhood(pos, moore, include_center, radius)
         return self.get_cell_list_contents(neighbors)
 
-    cdef tuple torus_adj(self, pos):
+    cpdef tuple torus_adj(self, pos):
         cdef long x, y
         if not self.out_of_bounds(pos):
             return pos
@@ -407,30 +396,37 @@ cdef class _BaseGrid:
             x, y = pos
             return x % self.width, y % self.height
 
-    cdef bint out_of_bounds(self, pos):
+    cpdef bint out_of_bounds(self, pos):
         cdef long x, y
         x, y = pos
         return x < 0 or x >= self.width or y < 0 or y >= self.height
 
     def iter_cell_list_contents(self, cell_list) :
-        return (
-            self._grid[x][y]
-            for x, y in itertools.filterfalse(self.is_cell_empty, cell_list)
-        )
+        yield from self.get_cell_list_contents(cell_list)
+        #return (
+        #    self._grid[x][y]
+        #    for x, y in itertools.filterfalse(self.is_cell_empty, cell_list)
+        #)
 
     cpdef list get_cell_list_contents(self, cell_list):
         cdef list agents
         cdef long count, x, y
-        
+            
         length = len(cell_list)
+        
+        if length == 2 and isinstance(cell_list, tuple):
+            cell_list = [cell_list]
+            length = 1
+            
         agents = [None] * length
         count = 0
+        grid = self._grid
 
         for i in range(length):
             pos = cell_list[i]
             if not self.is_cell_empty(pos):
                 x, y = pos
-                agents[count] = self._grid[x][y]
+                agents[count] = grid[x][y]
                 count += 1
                 
         return agents[:count]
@@ -472,25 +468,13 @@ cdef class _BaseGrid:
         x, y = pos
         return self._occupancy_matrix[x, y] == 0
 
-    def move_to_empty(self, agent, cutoff = 0.998, num_agents = None):
-        """Moves agent to a random empty cell, vacating agent's old cell."""
-        if num_agents is not None:
-            warn(
-                (
-                    "`num_agents` is being deprecated since it's no longer used "
-                    "inside `move_to_empty`. It shouldn't be passed as a parameter."
-                ),
-                DeprecationWarning,
-            )
+    def move_to_empty(self, agent, double cutoff = 0.998):
+        cdef long num_empty_cells
+        
         num_empty_cells = len(self.empties)
         if num_empty_cells == 0:
             raise Exception("ERROR: No empty cells")
 
-        # This method is based on Agents.jl's random_empty() implementation. See
-        # https://github.com/JuliaDynamics/Agents.jl/pull/541. For the discussion, see
-        # https://github.com/projectmesa/mesa/issues/1052. The default cutoff value
-        # provided is the break-even comparison with the time taken in the else
-        # branching point.
         if 1 - num_empty_cells / self.num_cells < cutoff:
             while True:
                 new_pos = (
@@ -501,8 +485,7 @@ cdef class _BaseGrid:
                     break
         else:
             new_pos = agent.random.choice(sorted(self.empties))
-        self.remove_agent(agent)
-        self.place_agent(agent, new_pos)
+        self.move_agent(agent, new_pos)
 
     cpdef bint exists_empty_cells(self):
         return len(self.empties) > 0
@@ -582,152 +565,3 @@ cdef class _BaseMultiGrid(_BaseGrid):
     #        for x, y in itertools.filterfalse(self.is_cell_empty, cell_list)
     #   )
         
-
-cdef class _Grid_only_list:
-    cdef long height, width, num_cells, num_empties
-    cdef bint torus
-    cdef long[:, :] _occupancy_matrix
-    cdef list _grid
-    cdef dict _neighborhood_cache
-    
-    def __init__(self, long width, long height, bint torus):
-        self.height = height
-        self.width = width
-        self.torus = torus
-        self.num_cells = height * width
-        self.num_empties = self.num_cells
-        
-        self._occupancy_matrix = np.zeros((self.width, self.height), dtype=long)
-        self._grid = [
-            [self.default_val() for _ in range(self.height)] for _ in range(self.width)
-        ]
-        
-        self._neighborhood_cache = {}
-
-    cpdef default_val(self):
-        return None
-    
-    cpdef bint is_cell_empty(self, pos):
-        cdef long x, y
-        
-        x, y = pos
-        return self._occupancy_matrix[x, y] == 0
-
-    cpdef place_agent(self, agent, pos):
-        cdef long x, y
-
-        if self.is_cell_empty(pos):
-            x, y = pos
-            self._occupancy_matrix[x, y] = 1
-            self._grid[x][y] = agent
-            agent.pos = pos
-        else:
-            raise Exception("Cell not empty")
-            
-    cpdef remove_agent(self, agent):
-        cdef long x, y
-        pos = agent.pos
-        if pos is None:
-            return
-        x, y = pos
-        self._occupancy_matrix[x, y] = 0
-        self._grid[x][y] = self.default_val()
-        agent.pos = None
-    
-    cpdef list get_cell_list_contents(self, object cell_list):
-        cdef list agents
-        cdef long x, y, count
-        
-        length = len(cell_list)
-        agents = [None] * length
-        count = 0
-
-        for i in range(length):
-            pos = cell_list[i]
-            if not self.is_cell_empty(pos):
-                x, y = pos
-                agents[count] = self._grid[x][y]
-                count += 1
-                
-        return agents[:count]
- 
-    cpdef list get_neighborhood(self, object pos, bint moore, bint include_center = False, int radius = 1):
-        cdef list neighborhood
-        cdef long nx, ny, n
-        cdef int x_radius, y_radius, dx, dy, kx, ky
-        cdef int min_x_range, max_x_range, min_y_range, max_y_range
-        cdef int x, y, count
-        
-        cache_key = (pos, moore, include_center, radius)
-        neighborhood = self._neighborhood_cache.get(cache_key, None)
-        
-        if neighborhood:
-            return neighborhood
-        
-        x, y = pos
-        count = 0
-        if self.torus:
-            x_max_radius, y_max_radius = self.width // 2, self.height // 2
-            x_radius, y_radius = min(radius, x_max_radius), min(radius, y_max_radius)
-
-            xdim_even, ydim_even = (self.width + 1) % 2, (self.height + 1) % 2
-            kx = 1 if x_radius == x_max_radius and xdim_even else 0
-            ky = 1 if y_radius == y_max_radius and ydim_even else 0
-            
-            n = (2 * x_radius + 1 - kx) * (2 * y_radius + 1 - ky) 
-            neighborhood = [None] * n
-            for dx in range(-x_radius, x_radius + 1 - kx):
-                for dy in range(-y_radius, y_radius + 1 - ky):
-
-                    if not moore and abs(dx) + abs(dy) > radius:
-                        continue
-
-                    nx = (x + dx) % self.width
-                    ny = (y + dy) % self.height
-
-                    if nx == x and ny == y and not include_center:
-                        continue
-
-                    neighborhood[count] = (nx, ny)
-                    count += 1
-        else:
-            min_x_range = max(0, x - radius)
-            max_x_range = min(self.width, x + radius + 1)
-            min_y_range = max(0, y - radius)
-            max_y_range = min(self.height, y + radius + 1)
-            
-            n = (max_x_range-min_x_range) * (max_y_range-min_y_range)
-            neighborhood = [None] * n
-            for nx in range(min_x_range, max_x_range):
-                for ny in range(min_y_range, max_y_range):
-
-                    if not moore and abs(nx - x) + abs(ny - y) > radius:
-                        continue
-
-                    if nx == x and ny == y and not include_center:
-                        continue
-
-                    neighborhood[count] = (nx, ny)
-                    count += 1
-        
-        neighborhood = neighborhood[:count]
-        self._neighborhood_cache[cache_key] = neighborhood
-        
-        return neighborhood
-    
-    cpdef list get_neighbors(self, object pos, bint moore, bint include_center = False, int radius = 1):
-        neighbors = self.get_neighborhood(pos, moore, include_center, radius)
-        return self.get_cell_list_contents(neighbors)
-
-    cpdef move_to_empty(self, agent):
-        while True:
-            pos = (agent.random.randrange(self.width), agent.random.randrange(self.height))
-            if self.is_cell_empty(pos):
-                break
-        self.remove_agent(agent)
-        self.place_agent(agent, pos)
-    
-    def coord_iter(self):
-        for x in range(self.width):
-            for y in range(self.height):
-                yield self._grid[x][y], x, y
