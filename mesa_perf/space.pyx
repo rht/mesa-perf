@@ -560,8 +560,27 @@ cdef class _BaseMultiGrid(_BaseGrid):
         if self._empties_built and self.is_cell_empty(pos):
             self._empties.add(pos)
         agent.pos = None
+
+    cpdef list get_cell_list_contents(self, cell_list):
+        
+        cdef list agents
+        
+        length = len(cell_list)
+        agents = []
+
+        for i in range(length):
+            pos = cell_list[i]
+            if not self.is_cell_empty(pos):
+                x, y = pos
+                agents_cell = self._grid[x][y]
+                for j in range(len(agents_cell)):
+                    agent = agents_cell[j]
+                    agents.append(agent)
+                
+        return agents
     
-    # this method fails - seems a bug in Cython
+    # this method breaks compilation, seems a bug in Cython, probably we should report it
+    # but it's not important for us since we want to port all iterators in Python space
     #def iter_cell_list_contents(self, cell_list):
     #    return itertools.chain.from_iterable(
     #        self._grid[x][y]
