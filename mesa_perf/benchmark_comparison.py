@@ -56,7 +56,6 @@ dict_method_stmt = {
 table = PrettyTable()
 table.field_names = ["method singlegrid", "time python", "time cython", "speed-up"]
 table.align = "l"
-dict_method_timings = {}
 
 avg_speed_up = 0
 
@@ -100,32 +99,11 @@ cell_list = grid.get_neighborhood(pos, True, include_center=True, radius={2})
 setup_python = main_setup.format("mesa.space", density, radius)
 setup_cython = main_setup.format("space", density, radius)
 
-dict_method_stmt = {
-"__init__": "MultiGrid(width, height, False)",
-"get_neighborhood": "grid.get_neighborhood(pos, True, include_center=False, radius={})".format(radius),
-"get_cell_list_contents": "grid.get_cell_list_contents(cell_list)",
-"get_neighbors": "grid.get_neighbors(pos, True, include_center=False, radius={})".format(radius),
-"out_of_bounds": "grid.out_of_bounds(pos)",
-"is_cell_empty": "grid.out_of_bounds(pos)",
-"move_to_empty": "grid.move_to_empty(agent)",
-"remove_agent + place_agent": "grid.remove_agent(agent); grid.place_agent(agent, pos)",
-"torus_adj": "grid.torus_adj(pos_2)",
-"build and call empties": "grid.empties",
-"iter_cell_list_contents": "for x in grid.iter_cell_list_contents(cell_list): x",
-"iter_neighbors": "for x in grid.iter_neighbors(pos, True, include_center=False, radius={}): x".format(radius),
-"coord_iter": "for x in grid.coord_iter(): x",
-"__iter__": "for x in grid: x",
-"__getitem__ list of tuples": "grid[cell_list]",
-"__getitem__ single tuple": "grid[pos]",
-"__getitem__ single column": "grid[:, 0]",
-"__getitem__ single row": "grid[0, :]",
-"__getitem__ grid": "grid[:, :]",
-}
+dict_method_stmt["__init__"] = "MultiGrid(width, height, False)"
 
 table = PrettyTable()
 table.field_names = ["method multigrid", "time python", "time cython", "speed-up"]
 table.align = "l"
-dict_method_timings = {}
 
 avg_speed_up = 0
 
