@@ -1,4 +1,5 @@
 import timeit
+from prettytable import PrettyTable
 
 repetition = 1000
 radius = 1
@@ -48,14 +49,17 @@ dict_method_stmt = {
 "__iter__": "for x in grid: x",
 }
 
-descr = "python singlegrid vs. cython singlegrid "
-print(descr)
 
+table = PrettyTable()
+table.field_names = ["method singlegrid", "time python", "time cython", "speed-up"]
 dict_method_timings = {}
+
 for method, stmt in dict_method_stmt.items():
     python_time = timeit.timeit(stmt, setup_python, number=repetition)
     cython_time = timeit.timeit(stmt, setup_cython, number=repetition) 
-    conv_micro_python = python_time * 10**6 / repetition
-    conv_micro_cython = cython_time * 10**6 / repetition
+    micro_python = "{:.3f} μs".format(python_time * 10**6 / repetition)
+    micro_cython = "{:.3f} μs".format(cython_time * 10**6 / repetition)
     speed_up = python_time/ cython_time
-    print(method, ":", "{:.3f} μs".format(conv_micro_python), "{:.3f} μs".format(conv_micro_cython), "- speedup -", round(speed_up,2))
+    table.add_row([method, micro_python, micro_cython, round(speed_up,2)])
+
+print(table)
