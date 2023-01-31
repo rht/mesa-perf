@@ -2,7 +2,7 @@ import timeit
 from prettytable import PrettyTable
 
 repetition = 1000
-radius = 1
+radius = 10
 density = 0.5
 
 main_setup = """
@@ -49,17 +49,24 @@ dict_method_stmt = {
 "__iter__": "for x in grid: x",
 }
 
-
 table = PrettyTable()
 table.field_names = ["method singlegrid", "time python", "time cython", "speed-up"]
 dict_method_timings = {}
+
+avg_speed_up = 0
 
 for method, stmt in dict_method_stmt.items():
     python_time = timeit.timeit(stmt, setup_python, number=repetition)
     cython_time = timeit.timeit(stmt, setup_cython, number=repetition) 
     micro_python = "{:.3f} μs".format(python_time * 10**6 / repetition)
     micro_cython = "{:.3f} μs".format(cython_time * 10**6 / repetition)
-    speed_up = python_time/ cython_time
+    speed_up = python_time / cython_time
+    avg_speed_up += speed_up
     table.add_row([method, micro_python, micro_cython, round(speed_up,2)])
 
+avg_speed_up = avg_speed_up / len(dict_method_stmt)
+
 print(table)
+print()
+print("The average speed-up is", str(round(avg_speed_up,2)) + "x")
+print()
