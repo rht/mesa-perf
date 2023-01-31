@@ -2,8 +2,8 @@ import timeit
 from prettytable import PrettyTable
 
 repetition = 1000
-radius = 10
-density = 0.5
+radius = 1
+density = 0.1
 
 main_setup = """
 from {0} import SingleGrid
@@ -47,10 +47,16 @@ dict_method_stmt = {
 "iter_neighbors": "for x in grid.iter_neighbors(pos, True, include_center=False, radius={}): x".format(radius),
 "coord_iter": "for x in grid.coord_iter(): x",
 "__iter__": "for x in grid: x",
+"__getitem__ list of tuples": "grid[cell_list]",
+"__getitem__ single tuple": "grid[pos]",
+"__getitem__ single column": "grid[:, 0]",
+"__getitem__ single row": "grid[0, :]",
+"__getitem__ grid": "grid[:, :]",
 }
 
 table = PrettyTable()
 table.field_names = ["method singlegrid", "time python", "time cython", "speed-up"]
+table.align = "l"
 dict_method_timings = {}
 
 avg_speed_up = 0
@@ -62,11 +68,11 @@ for method, stmt in dict_method_stmt.items():
     micro_cython = "{:.3f} μs".format(cython_time * 10**6 / repetition)
     speed_up = python_time / cython_time
     avg_speed_up += speed_up
-    table.add_row([method, micro_python, micro_cython, round(speed_up,2)])
+    table.add_row([method, micro_python, micro_cython, "{:.2f}x".format(speed_up)])
 
 avg_speed_up = avg_speed_up / len(dict_method_stmt)
 
 print(table)
 print()
-print("The average speed-up is", str(round(avg_speed_up,2)) + "x")
+print("The average speed-up is", "{:.2f}x".format(avg_speed_up))
 print()
