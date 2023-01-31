@@ -1,18 +1,12 @@
-# distutils: language = c++
-# cython: nonecheck=False
 # cython: infer_types=True
 # cython: language_level=3
 # cython: nonecheck=False
 # cython: initializedcheck=False
 
-cimport cython
 import numpy as np
 import itertools
-import random
-from warnings import warn
 
-
-def is_integer(x):
+cdef is_integer(x):
     return isinstance(x, (int, np.integer))
 
 
@@ -20,20 +14,22 @@ cdef class _Grid:
 
     cdef readonly long height, width, num_cells, num_empties
     cdef readonly bint torus
-    cdef readonly list _grid
-    cdef long[:, :] _occupancy_matrix
+    cdef list _grid
+    cdef char[:, :] _occupancy_matrix
     cdef dict _neighborhood_cache
     cdef bint _empties_built 
     cdef set _empties
     
     def __init__(self, long width, long height, bint torus):
+        
         self.height = height
         self.width = width
         self.torus = torus
         self.num_cells = height * width
         self.num_empties = self.num_cells
         
-        self._occupancy_matrix = np.zeros((self.width, self.height), dtype=long)
+        self._occupancy_matrix = np.zeros((self.width, self.height), dtype=np.int8)
+
         self._grid = [
             [self.default_val() for _ in range(self.height)] for _ in range(self.width)
         ]
@@ -89,8 +85,8 @@ cdef class _Grid:
 
     cpdef list get_neighborhood(self, object pos, bint moore, bint include_center = False, int radius = 1):
         cdef list neighborhood
-        cdef long nx, ny, n
-        cdef int x_radius, y_radius, dx, dy, kx, ky
+        cdef long nx, ny
+        cdef int n, x_radius, y_radius, dx, dy, kx, ky
         cdef int min_x_range, max_x_range, min_y_range, max_y_range
         cdef int x, y, count
         
@@ -174,17 +170,13 @@ cdef class _Grid:
         cdef list agents
         cdef long count, x, y
         
-        length = len(cell_list)
-        
-        if length == 2 and isinstance(cell_list, tuple):
+        if (length:=len(cell_list)) == 2 and isinstance(cell_list, tuple):
             cell_list = [cell_list]
-            length = 1
             
         agents = [None] * length
         count = 0
 
-        for i in range(length):
-            pos = cell_list[i]
+        for pos in cell_list:
             if not self.is_cell_empty(pos):
                 x, y = pos
                 agents[count] = self._grid[x][y]
@@ -252,14 +244,13 @@ cdef class _Grid:
         return self.num_empties > 0
         
     def iter_cell_list_contents(self, cell_list) :
+        if len(cell_list) == 2 and isinstance(cell_list, tuple):
+            cell_list = [cell_list]
         return (self._grid[x][y] for x, y in itertools.filterfalse(self.is_cell_empty, cell_list))
 
     cpdef iter_neighbors(self, pos, bint moore, bint include_center = False, int radius = 1):
         neighborhood = self.get_neighborhood(pos, moore, include_center, radius)
         return self.iter_cell_list_contents(neighborhood)
-        
-    def iter_neighborhood(self, pos, moore, include_center = False, radius = 1):
-        yield from self.get_neighborhood(pos, moore, include_center, radius)
         
     def __iter__(self):
         return itertools.chain(*self._grid)
@@ -300,12 +291,15 @@ cdef class SingleGrid(_Grid):
 
 cdef class MultiGrid(_Grid):
 
-    def default_val(self):
+    cpdef default_val(self):
         return []
 
     cpdef place_agent(self, agent, pos):
         x, y = pos
         if agent.pos is None or agent not in self._grid[x][y]:
+            if self.is_cell_empty(pos):
+                self._occupancy_matrix[x, y] = 1
+                self.num_empties -= 1
             self._grid[x][y].append(agent)
             agent.pos = pos
             if self._empties_built:
@@ -315,19 +309,23 @@ cdef class MultiGrid(_Grid):
         pos = agent.pos
         x, y = pos
         self._grid[x][y].remove(agent)
-        if self._empties_built and self.is_cell_empty(pos):
-            self._empties.add(pos)
+        if self.is_cell_empty(pos):
+            self.num_empties += 1
+            self._occupancy_matrix[x, y] = 0
+            if self._empties_built:
+                self._empties.add(pos)
         agent.pos = None
     
     cpdef list get_cell_list_contents(self, cell_list):
         
         cdef list agents
         
-        length = len(cell_list)
+        if len(cell_list) == 2 and isinstance(cell_list, tuple):
+            cell_list = [cell_list]
+            
         agents = []
 
-        for i in range(length):
-            pos = cell_list[i]
+        for pos in cell_list:
             if not self.is_cell_empty(pos):
                 x, y = pos
                 agents_cell = self._grid[x][y]
@@ -337,14 +335,16 @@ cdef class MultiGrid(_Grid):
                 
         return agents
     
-        
-    # this method fails - seems a bug in Cython
-    #def iter_cell_list_contents(self, cell_list):
-    #    return itertools.chain.from_iterable(
-    #        self._grid[x][y]
-    #        for x, y in itertools.filterfalse(self.is_cell_empty, cell_list)
-    #   )
-        
+    def iter_cell_list_contents(self, cell_list):
+        if len(cell_list) == 2 and isinstance(cell_list, tuple):
+            cell_list = [cell_list]
+            
+        for pos in cell_list:
+            if not self.is_cell_empty(pos):
+                x, y = pos
+                for content in self._grid[x][y]:
+                    yield content
+                    
 cdef class _Grid_memviews:
     def __init__(self, long width, long height, bint torus):
         self.height = height
