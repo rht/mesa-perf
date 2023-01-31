@@ -4,12 +4,6 @@ repetition = 1000
 radius = 1
 density = 0.5
 
-def print_elapsed(label, setup, stmt):
-    _elapsed = timeit.timeit(stmt, setup, number=repetition) * 10**6 / repetition
-    elapsed = "{:.3f} μs".format(_elapsed)
-    print(label, elapsed, end="")
-    return _elapsed
-
 main_setup = """
 from {0} import SingleGrid
 from mesa import Agent, Model
