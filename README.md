@@ -1,38 +1,17 @@
 # mesa-perf
 
-Implementation of SingleGrid and MultiGrid using Cython which are 100% compatible with Mesa.
+Project to speed-up different parts of Mesa.
+
+We have two plans we want to carry out:
+
+- Make some faster drop-in replacement components to be used in Mesa Repo as substitute to the current components without affecting the user experience anyhow;
+- Create some very fast version of components to be used mostly from Cython, so that the user could use this version to improve even more the speed of the simulation if needed.
+
+Currently, we implemented drop-in replacement SingleGrid and MultiGrid components using Cython.
 
 These are the speed-up for some methods:
 
-- Cython MultiGrid in respect to the current one:
-
-```
-+----------------------------+-------------+-------------+----------+
-| method multigrid           | time python | time cython | speed-up |
-+----------------------------+-------------+-------------+----------+
-| __init__                   | 1022.150 μs | 310.837 μs  | 3.29x    |
-| get_neighborhood           | 0.249 μs    | 0.143 μs    | 1.74x    |
-| get_cell_list_contents     | 2.959 μs    | 0.326 μs    | 9.07x    |
-| get_neighbors              | 3.185 μs    | 0.385 μs    | 8.27x    |
-| out_of_bounds              | 0.175 μs    | 0.040 μs    | 4.32x    |
-| is_cell_empty              | 0.174 μs    | 0.040 μs    | 4.32x    |
-| move_to_empty              | 5.102 μs    | 1.995 μs    | 2.56x    |
-| remove_agent + place_agent | 0.439 μs    | 0.269 μs    | 1.63x    |
-| torus_adj                  | 0.269 μs    | 0.070 μs    | 3.83x    |
-| build and call empties     | 2.211 μs    | 0.660 μs    | 3.35x    |
-| iter_cell_list_contents    | 2.735 μs    | 0.458 μs    | 5.97x    |
-| iter_neighbors             | 2.866 μs    | 0.525 μs    | 5.46x    |
-| coord_iter                 | 988.736 μs  | 482.695 μs  | 2.05x    |
-| __iter__                   | 170.096 μs  | 176.336 μs  | 0.96x    |
-| __getitem__ list of tuples | 3.682 μs    | 0.688 μs    | 5.35x    |
-| __getitem__ single tuple   | 0.927 μs    | 0.111 μs    | 8.33x    |
-| __getitem__ single column  | 4.871 μs    | 2.344 μs    | 2.08x    |
-| __getitem__ single row     | 1.272 μs    | 0.394 μs    | 3.22x    |
-| __getitem__ grid           | 199.595 μs  | 78.340 μs   | 2.55x    |
-+----------------------------+-------------+-------------+----------+
-```
-
-- Cython SingleGrid in respect to the current one:
+- Cython SingleGrid in respect to the default SingleGrid in the Mesa repository:
 
 ```
 +----------------------------+-------------+-------------+----------+
@@ -57,5 +36,32 @@ These are the speed-up for some methods:
 | __getitem__ single column  | 4.825 μs    | 2.354 μs    | 2.05x    |
 | __getitem__ single row     | 1.311 μs    | 0.461 μs    | 2.84x    |
 | __getitem__ grid           | 199.114 μs  | 82.000 μs   | 2.43x    |
++----------------------------+-------------+-------------+----------+
+```
+- Cython MultiGrid in respect to the default MultiGrid in the Mesa repository:
+
+```
++----------------------------+-------------+-------------+----------+
+| method multigrid           | time python | time cython | speed-up |
++----------------------------+-------------+-------------+----------+
+| __init__                   | 1022.150 μs | 310.837 μs  | 3.29x    |
+| get_neighborhood           | 0.249 μs    | 0.143 μs    | 1.74x    |
+| get_cell_list_contents     | 2.959 μs    | 0.326 μs    | 9.07x    |
+| get_neighbors              | 3.185 μs    | 0.385 μs    | 8.27x    |
+| out_of_bounds              | 0.175 μs    | 0.040 μs    | 4.32x    |
+| is_cell_empty              | 0.174 μs    | 0.040 μs    | 4.32x    |
+| move_to_empty              | 5.102 μs    | 1.995 μs    | 2.56x    |
+| remove_agent + place_agent | 0.439 μs    | 0.269 μs    | 1.63x    |
+| torus_adj                  | 0.269 μs    | 0.070 μs    | 3.83x    |
+| build and call empties     | 2.211 μs    | 0.660 μs    | 3.35x    |
+| iter_cell_list_contents    | 2.735 μs    | 0.458 μs    | 5.97x    |
+| iter_neighbors             | 2.866 μs    | 0.525 μs    | 5.46x    |
+| coord_iter                 | 988.736 μs  | 482.695 μs  | 2.05x    |
+| __iter__                   | 170.096 μs  | 176.336 μs  | 0.96x    |
+| __getitem__ list of tuples | 3.682 μs    | 0.688 μs    | 5.35x    |
+| __getitem__ single tuple   | 0.927 μs    | 0.111 μs    | 8.33x    |
+| __getitem__ single column  | 4.871 μs    | 2.344 μs    | 2.08x    |
+| __getitem__ single row     | 1.272 μs    | 0.394 μs    | 3.22x    |
+| __getitem__ grid           | 199.595 μs  | 78.340 μs   | 2.55x    |
 +----------------------------+-------------+-------------+----------+
 ```
