@@ -5,7 +5,7 @@ repetition = 1000
 radius = 1
 density = 0.5
 
-main_setup = """
+main_setup_single = """
 from {0} import SingleGrid
 from mesa import Agent, Model
 import random
@@ -28,10 +28,34 @@ pos_2 = (-3, -5)
 cell_list = grid.get_neighborhood(pos, True, include_center=True, radius={2})
 """
 
-setup_python = main_setup.format("mesa.space", density, radius)
-setup_cython = main_setup.format("space", density, radius)
+main_setup_multi = """
+from {0} import MultiGrid
+from mesa import Agent, Model
+import random
+random.seed(1)
+density = {1}
+width = 100
+height = 100
+grid = MultiGrid(width, height, True)
+model = Model()
+for i in range(round(density*width*height)):
+    agent = Agent(i, model)
+    x = random.randrange(width)
+    y = random.randrange(height)
+    grid.place_agent(agent, (x, y))
+pos = (x,y)
+pos_2 = (-3, -5)
+cell_list = grid.get_neighborhood(pos, True, include_center=True, radius={2})
+"""
 
-dict_method_stmt = {
+setup_single_python = main_setup_single.format("mesa.space", density, radius)
+setup_single_cython = main_setup_single.format("space", density, radius)
+
+setup_multi_python = main_setup_multi.format("mesa.space", density, radius)
+setup_multi_cython = main_setup_multi.format("space", density, radius)
+
+
+dict_method_single_stmt = {
 "__init__": "SingleGrid(width, height, False)",
 "get_neighborhood": "grid.get_neighborhood(pos, True, include_center=False, radius={})".format(radius),
 "get_cell_list_contents": "grid.get_cell_list_contents(cell_list)",
@@ -53,72 +77,28 @@ dict_method_stmt = {
 "__getitem__ grid": "grid[:, :]",
 }
 
+dict_method_multi_stmt = dict_method_single_stmt.copy()
+dict_method_multi_stmt["__init__"] = "MultiGrid(width, height, False)"
+
 table = PrettyTable()
-table.field_names = ["method singlegrid", "time python", "time cython", "speed-up"]
+table.field_names = ["method name", "speed-up singlegrid", "speed-up multigrid"]
 table.align = "l"
 
 avg_speed_up = 0
 
-for method, stmt in dict_method_stmt.items():
-    python_time = timeit.timeit(stmt, setup_python, number=repetition)
-    cython_time = timeit.timeit(stmt, setup_cython, number=repetition) 
-    micro_python = "{:.3f} μs".format(python_time * 10**6 / repetition)
-    micro_cython = "{:.3f} μs".format(cython_time * 10**6 / repetition)
-    speed_up = python_time / cython_time
-    avg_speed_up += speed_up
-    table.add_row([method, micro_python, micro_cython, "{:.2f}x".format(speed_up)])
-
-avg_speed_up = avg_speed_up / len(dict_method_stmt)
-
-print(table)
-print()
-print("The average speed-up is", "{:.2f}x".format(avg_speed_up))
-print()
-print()
-
-main_setup = """
-from {0} import MultiGrid
-from mesa import Agent, Model
-import random
-random.seed(1)
-density = {1}
-width = 100
-height = 100
-grid = MultiGrid(width, height, True)
-model = Model()
-for i in range(round(density*width*height)):
-    agent = Agent(i, model)
-    x = random.randrange(width)
-    y = random.randrange(height)
-    grid.place_agent(agent, (x, y))
-pos = (x,y)
-pos_2 = (-3, -5)
-cell_list = grid.get_neighborhood(pos, True, include_center=True, radius={2})
-"""
-
-setup_python = main_setup.format("mesa.space", density, radius)
-setup_cython = main_setup.format("space", density, radius)
-
-dict_method_stmt["__init__"] = "MultiGrid(width, height, False)"
-
-table = PrettyTable()
-table.field_names = ["method multigrid", "time python", "time cython", "speed-up"]
-table.align = "l"
-
-avg_speed_up = 0
-
-for method, stmt in dict_method_stmt.items():
-    python_time = timeit.timeit(stmt, setup_python, number=repetition)
-    cython_time = timeit.timeit(stmt, setup_cython, number=repetition) 
-    micro_python = "{:.3f} μs".format(python_time * 10**6 / repetition)
-    micro_cython = "{:.3f} μs".format(cython_time * 10**6 / repetition)
-    speed_up = python_time / cython_time
-    avg_speed_up += speed_up
-    table.add_row([method, micro_python, micro_cython, "{:.2f}x".format(speed_up)])
-
-avg_speed_up = avg_speed_up / len(dict_method_stmt)
+for method in dict_method_single_stmt:
+    stmt_single = dict_method_single_stmt[method]
+    stmt_multi = dict_method_multi_stmt[method]
+    python_time_single = timeit.timeit(stmt_single, setup_single_python, number=repetition)
+    cython_time_single = timeit.timeit(stmt_single, setup_single_cython, number=repetition) 
+    python_time_multi = timeit.timeit(stmt_multi, setup_multi_python, number=repetition)
+    cython_time_multi = timeit.timeit(stmt_multi, setup_multi_cython, number=repetition) 
+    micro_python_single = "{:.3f} μs".format(python_time_single * 10**6 / repetition)
+    micro_cython_single = "{:.3f} μs".format(cython_time_single * 10**6 / repetition)
+    micro_python_multi = "{:.3f} μs".format(python_time_multi * 10**6 / repetition)
+    micro_cython_multi = "{:.3f} μs".format(cython_time_multi * 10**6 / repetition)   
+    speed_up_single = python_time_single / cython_time_single
+    speed_up_multi = python_time_multi / cython_time_multi
+    table.add_row([method, "{:.2f}x".format(speed_up_single), "{:.2f}x".format(speed_up_multi)])
 
 print(table)
-print()
-print("The average speed-up is", "{:.2f}x".format(avg_speed_up))
-print()
