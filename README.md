@@ -2,7 +2,7 @@
 
 These are the speed-up for some parts, which are 100% compatible to Mesa:
 
-Cython MultiGrid in respect to the current one:
+- Cython MultiGrid in respect to the current one:
 
 ```
 +----------------------------+-------------+-------------+----------+
@@ -30,7 +30,7 @@ Cython MultiGrid in respect to the current one:
 +----------------------------+-------------+-------------+----------+
 ```
 
-Cython SingleGrid in respect to the current one:
+- Cython SingleGrid in respect to the current one:
 
 ```
 +----------------------------+-------------+-------------+----------+
