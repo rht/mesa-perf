@@ -4,6 +4,7 @@ These are the speed-up for some parts, which are 100% compatible to Mesa:
 
 Cython MultiGrid in respect to the current one:
 
+```
 +----------------------------+-------------+-------------+----------+
 | method multigrid           | time python | time cython | speed-up |
 +----------------------------+-------------+-------------+----------+
@@ -27,9 +28,11 @@ Cython MultiGrid in respect to the current one:
 | __getitem__ single row     | 1.272 μs    | 0.394 μs    | 3.22x    |
 | __getitem__ grid           | 199.595 μs  | 78.340 μs   | 2.55x    |
 +----------------------------+-------------+-------------+----------+
+```
 
 Cython SingleGrid in respect to the current one:
 
+```
 +----------------------------+-------------+-------------+----------+
 | method singlegrid          | time python | time cython | speed-up |
 +----------------------------+-------------+-------------+----------+
@@ -53,3 +56,4 @@ Cython SingleGrid in respect to the current one:
 | __getitem__ single row     | 1.311 μs    | 0.461 μs    | 2.84x    |
 | __getitem__ grid           | 199.114 μs  | 82.000 μs   | 2.43x    |
 +----------------------------+-------------+-------------+----------+
+```
