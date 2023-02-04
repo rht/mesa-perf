@@ -1,6 +1,8 @@
 # mesa-perf
 
-These are the speed-up for some parts, which are 100% compatible to Mesa:
+Implementation of SingleGrid and MultiGrid using Cython which are 100% compatible with Mesa.
+
+These are the speed-up for some methods:
 
 - Cython MultiGrid in respect to the current one:
 
