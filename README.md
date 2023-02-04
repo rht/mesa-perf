@@ -37,4 +37,4 @@ These are the speed-ups for some methods:
 +----------------------------+---------------------+--------------------+
 ```
 
-We also used these grids instead of the ones present in the Mesa repository for some simulations in the [mesa-examples](https://github.com/projectmesa/mesa-examples/tree/main/examples) repository: we calculated an overall 2.5x speed-up for the `schelling` model and an overall 2x speed-up for the more realistic example `sugarscape_g1mt` one.
+We also used these grids instead of the ones present in the Mesa repository for some simulations in the [mesa-examples](https://github.com/projectmesa/mesa-examples/tree/main/examples) repository: we calculated an overall 2.5x speed-up for the `schelling` model and an overall 2x speed-up for the more realistic `sugarscape_g1mt` model.
