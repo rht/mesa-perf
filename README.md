@@ -36,3 +36,5 @@ These are the speed-ups for some methods:
 | __getitem__ grid           | 2.46x               | 2.57x              |
 +----------------------------+---------------------+--------------------+
 ```
+
+We also used these grids instead of the ones present in the Mesa repository for some simulations in the [mesa-examples](https://github.com/projectmesa/mesa-examples/tree/main/examples) repository: we calculated an overall 2.5x speed-up for the `schelling` model and an overall 2x speed-up for the more realistic example `sugarscape_g1mt` one.
