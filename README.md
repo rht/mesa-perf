@@ -4,8 +4,8 @@ Project to speed-up different parts of Mesa.
 
 We have two plans we want to carry out:
 
-- Make some faster drop-in replacement components to be used in Mesa Repo as substitute to the current components without affecting the user experience anyhow;
-- Create some very fast version of components to be used mostly from Cython, so that the user could use this version to improve even more the speed of the simulation if needed.
+- A Cython backend with a Python API making some faster drop-in replacement components to be used in Mesa Repo as substitute to the current components without affecting the user experience anyhow;
+- A Cython backend with a Cython API so that to create some very fast version of components to be used (mostly) from Cython, so that the user could use this version to improve even more the speed of the simulation if needed.
 
 Currently, we implemented drop-in replacement SingleGrid and MultiGrid components using Cython.
 
