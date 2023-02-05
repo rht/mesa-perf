@@ -49,7 +49,7 @@ cdef class _Grid:
     cdef _build_empties(self):
         self._empties = set()
         for x in range(self.width):
-            for y in range(self.width):
+            for y in range(self.height):
                 pos = (x, y)
                 if self.is_cell_empty(pos):
                     self._empties.add(pos)
