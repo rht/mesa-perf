@@ -7,7 +7,7 @@ import numpy as np
 import itertools
 
 cdef is_integer(x):
-    return isinstance(x, (int, np.integer))
+    return isinstance(x, int) or isinstance(x, np.integer)
 
 
 cdef class _Grid:
@@ -57,32 +57,31 @@ cdef class _Grid:
 
     def __getitem__(self, index):
         
-        if isinstance(index, int):
-            # grid[x]
-            return self._grid[index]
+        if isinstance(index, tuple):
+            x, y = index
+            x_int, y_int = is_integer(x), is_integer(y)
+            if x_int and y_int:
+                # grid[x, y]
+                x, y = self.torus_adj(index)
+                return self._grid[x][y]
+            elif x_int:
+                # grid[x, :]
+                x, _ = self.torus_adj((x, 0))
+                return self._grid[x][y]
+            elif y_int:
+                # grid[:, y]
+                _, y = self.torus_adj((0, y))
+                return [rows[y] for rows in self._grid[x]]
+            else:
+                # grid[:, :]
+                return [cell for rows in self._grid[x] for cell in rows[y]]
         elif isinstance(index[0], tuple):
             # grid[(x1, y1), (x2, y2), ...]
             return [self._grid[x][y] for x, y in map(self.torus_adj, index)]
-
-        x, y = index
-        x_int, y_int = is_integer(x), is_integer(y)
-
-        if x_int and y_int:
-            # grid[x, y]
-            x, y = self.torus_adj(index)
-            return self._grid[x][y]
-        elif x_int:
-            # grid[x, :]
-            x, _ = self.torus_adj((x, 0))
-            return self._grid[x][y]
-        elif y_int:
-            # grid[:, y]
-            _, y = self.torus_adj((0, y))
-            return [rows[y] for rows in self._grid[x]]
         else:
-            # grid[:, :]
-            return [cell for rows in self._grid[x] for cell in rows[y]]
-
+            # grid[x]
+            return self._grid[index]
+            
     cpdef list get_neighborhood(self, object pos, bint moore, bint include_center = False, int radius = 1):
         cdef list neighborhood
         cdef long nx, ny
@@ -346,6 +345,7 @@ cdef class MultiGrid(_Grid):
                 x, y = pos
                 for content in self._grid[x][y]:
                     yield content
+                    
                     
 cdef class _Grid_memviews:
     def __init__(self, long width, long height, bint torus):
