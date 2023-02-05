@@ -5,7 +5,7 @@ import random
 import unittest
 from unittest.mock import Mock, patch
 
-from .space import MultiGrid, SingleGrid
+from space import MultiGrid, SingleGrid
 
 # Initial agent positions for testing
 #
