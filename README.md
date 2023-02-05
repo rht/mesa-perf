@@ -15,25 +15,25 @@ These are the speed-ups for some methods in common situations:
 +----------------------------+---------------------+--------------------+
 | method name                | speed-up singlegrid | speed-up multigrid |
 +----------------------------+---------------------+--------------------+
-| __init__                   | 9.26x               | 3.62x              |
-| get_neighborhood           | 1.51x               | 1.55x              |
-| get_cell_list_contents     | 10.63x              | 11.55x             |
-| get_neighbors              | 6.98x               | 7.89x              |
-| out_of_bounds              | 4.20x               | 3.97x              |
-| is_cell_empty              | 3.84x               | 4.11x              |
-| move_to_empty              | 2.84x               | 2.60x              |
-| remove_agent + place_agent | 3.87x               | 1.81x              |
-| torus_adj                  | 4.11x               | 3.85x              |
-| build and call empties     | 2.84x               | 3.05x              |
-| iter_cell_list_contents    | 3.38x               | 6.95x              |
-| iter_neighbors             | 2.87x               | 5.52x              |
-| coord_iter                 | 1.58x               | 1.62x              |
-| __iter__                   | 1.01x               | 1.01x              |
-| __getitem__ list of tuples | 5.49x               | 5.15x              |
-| __getitem__ single tuple   | 8.41x               | 8.27x              |
-| __getitem__ single column  | 2.55x               | 2.49x              |
-| __getitem__ single row     | 2.64x               | 3.15x              |
-| __getitem__ grid           | 2.46x               | 2.57x              |
+| __init__                   | 8.97x               | 3.46x              |
+| get_neighborhood           | 1.62x               | 1.55x              |
+| get_cell_list_contents     | 11.23x              | 11.86x             |
+| get_neighbors              | 6.96x               | 8.00x              |
+| out_of_bounds              | 4.05x               | 3.88x              |
+| is_cell_empty              | 3.96x               | 3.81x              |
+| move_to_empty              | 2.88x               | 2.57x              |
+| remove_agent + place_agent | 3.82x               | 1.71x              |
+| torus_adj                  | 4.35x               | 3.80x              |
+| build and call empties     | 2.82x               | 3.01x              |
+| iter_cell_list_contents    | 3.41x               | 6.87x              |
+| iter_neighbors             | 2.85x               | 5.41x              |
+| coord_iter                 | 1.61x               | 1.62x              |
+| __iter__                   | 0.98x               | 1.00x              |
+| __getitem__ list of tuples | 5.70x               | 5.08x              |
+| __getitem__ single tuple   | 8.90x               | 8.29x              |
+| __getitem__ single column  | 2.51x               | 2.38x              |
+| __getitem__ single row     | 2.64x               | 3.08x              |
+| __getitem__ grid           | 2.33x               | 2.61x              |
 +----------------------------+---------------------+--------------------+
 ```
 
