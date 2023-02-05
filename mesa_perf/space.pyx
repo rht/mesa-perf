@@ -168,7 +168,7 @@ cdef class _Grid:
 
     cpdef list get_cell_list_contents(self, cell_list):
         cdef list agents
-        cdef long count, x, y
+        cdef long count
         
         if (length:=len(cell_list)) == 2 and isinstance(cell_list, tuple):
             cell_list = [cell_list]
@@ -295,6 +295,7 @@ cdef class MultiGrid(_Grid):
         return []
 
     cpdef place_agent(self, agent, pos):
+        cdef long x, y
         x, y = pos
         if agent.pos is None or agent not in self._grid[x][y]:
             if self.is_cell_empty(pos):
@@ -306,6 +307,7 @@ cdef class MultiGrid(_Grid):
                 self._empties.discard(pos)
 
     cpdef remove_agent(self, agent):
+        cdef long x, y
         pos = agent.pos
         x, y = pos
         self._grid[x][y].remove(agent)
