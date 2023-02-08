@@ -57,7 +57,13 @@ cdef class _Grid:
 
     def __getitem__(self, index):
         
-        if isinstance(index, tuple):
+        if isinstance(index, int):
+            # grid[x]
+            return self._grid[index]
+        elif isinstance(index[0], tuple):
+            # grid[(x1, y1), (x2, y2), ...]
+            return [self._grid[x][y] for x, y in map(self.torus_adj, index)]
+        else:
             x, y = index
             x_int, y_int = is_integer(x), is_integer(y)
             if x_int and y_int:
@@ -75,12 +81,6 @@ cdef class _Grid:
             else:
                 # grid[:, :]
                 return [cell for rows in self._grid[x] for cell in rows[y]]
-        elif isinstance(index[0], tuple):
-            # grid[(x1, y1), (x2, y2), ...]
-            return [self._grid[x][y] for x, y in map(self.torus_adj, index)]
-        else:
-            # grid[x]
-            return self._grid[index]
             
     cpdef list get_neighborhood(self, object pos, bint moore, bint include_center = False, int radius = 1):
         cdef list neighborhood
