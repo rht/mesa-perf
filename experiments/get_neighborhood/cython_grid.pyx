@@ -1,8 +1,11 @@
 # cython: infer_types=True
 import itertools
+from typing import Tuple
 
 cimport cython
 import numpy as np
+
+Coordinate = Tuple[int, int]
 
 cdef class Grid:
     """Base class for a rectangular grid.
@@ -51,9 +54,58 @@ cdef class Grid:
         """Default value for new cell elements."""
         return -1
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
+    #@cython.boundscheck(False)
+    #@cython.wraparound(False)
     cpdef list get_neighborhood(
+        self,
+        object pos,
+        bint moore,
+        bint include_center,
+        int radius,
+        bint torus,
+    ):
+
+        cdef int x, y
+        x, y = pos
+
+        cdef int max_neighborhood_count
+        max_neighborhood_count = (2 * radius + 1) ** 2
+        cdef long[:, :] neighborhood
+        neighborhood = np.empty((max_neighborhood_count, 2), long)
+
+        cdef int count
+        count = 0
+        cdef int new_x, new_y
+        cdef int dx, dy
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                if not moore and abs(dx) + abs(dy) > radius:
+                    continue
+                new_x = x + dx
+                new_y = y + dy
+
+                if torus:
+                    new_x %= self.width
+                    new_y %= self.height
+                elif self.out_of_bounds((new_x, new_y)):
+                    continue
+
+                if not (not include_center and dx == 0 and dy == 0):
+                    neighborhood[count, 0] = new_x
+                    neighborhood[count, 1] = new_y
+                    count += 1
+
+        # Convert to list
+        cdef list neighborhood_list
+        neighborhood_list = [0] * count
+        for i in range(count):
+            neighborhood_list[i] = (neighborhood[i, 0], neighborhood[i, 1])
+
+        return neighborhood_list
+
+    #@cython.boundscheck(False)
+    #@cython.wraparound(False)
+    cpdef list get_neighborhood_old_method(
         self,
         object pos,
         bint moore,
@@ -128,8 +180,9 @@ cdef class Grid:
         else:
             return pos[0] % self.width, pos[1] % self.height
 
-    def out_of_bounds(self, pos: Coordinate) -> bool:
+    cpdef bint out_of_bounds(self, pos: Coordinate):
         """Determines whether position is off the grid, returns the out of
         bounds coordinate."""
+        cdef int x, y
         x, y = pos
         return x < 0 or x >= self.width or y < 0 or y >= self.height
